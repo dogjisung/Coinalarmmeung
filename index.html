@@ -68,11 +68,11 @@
           priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
           const market = `KRW-${symbol.replace('USDT','')}`;
-          // corsproxy.io를 통한 CORS 우회 (쿼리 스트링에 직접 URL 전달)
-          const proxyUrl = `https://corsproxy.io/?https://api.upbit.com/v1/ticker?markets=${market}`;
+          // allorigins raw proxy with timestamp to prevent caching
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
           const res = await fetch(proxyUrl);
           const data = await res.json();
-          // Upbit ticker API는 배열 반환
+          // Upbit returns array
           priceVal = parseFloat(data[0].trade_price);
         } else {
           const market = bitgetSymbols[symbol];
