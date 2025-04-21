@@ -13,7 +13,7 @@
     .button-group { text-align: center; margin-top: 20px; }
     button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
     #register-btn { background-color: #6a5acd; color: white; }
-    #result, #alert-list { margin-top: 20px; font-weight: bold; text-align: center; }
+    #result, #alert-list, #refresh-timer { margin-top: 20px; font-weight: bold; text-align: center; }
     .alert-item {
       margin: 5px auto; background: #eee; padding: 10px; border-radius: 6px;
       width: 90%; display: flex; justify-content: space-between; align-items: center;
@@ -29,7 +29,8 @@
 
 <label for="symbol">코인 선택</label> <select id="symbol"> <option value="BTCUSDT">비트코인 (BTC)</option> <option value="ETHUSDT">이더리움 (ETH)</option> <option value="SOLUSDT">솔라나 (SOL)</option> <option value="XRPUSDT">리플 (XRP)</option> <option value="ADAUSDT">에이다 (ADA)</option> </select>
 
-  <p id="current-price">현재가: -</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
+  <p id="current-price">현재가: -</p>
+  <p id="refresh-timer">다음 변동까지: -초전</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
 
 <label for="condition">알림 조건</label> <select id="condition"> <option value="over">설정가 이상 도달 시</option> <option value="under">설정가 이하 도달 시</option> </select>
 
@@ -45,126 +46,12 @@
   <div id="alert-list"></div><audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio> <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio> <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
 
   <script>
-    const symbolSelect = document.getElementById('symbol');
-    const exchangeSelect = document.getElementById('exchange');
-    const priceLabel = document.getElementById('current-price');
-    const result = document.getElementById('result');
-    const alertList = document.getElementById('alert-list');
-    const soundSelect = document.getElementById('sound-select');
-    const customSoundInput = document.getElementById('custom-sound');
-    let customSoundURL = null;
-    let currentSymbol = symbolSelect.value;
-    let currentExchange = exchangeSelect.value;
-
-    const bitgetSymbols = {
-      BTCUSDT: "BTCUSDT_SPBL",
-      ETHUSDT: "ETHUSDT_SPBL",
-      SOLUSDT: "SOLUSDT_SPBL",
-      XRPUSDT: "XRPUSDT_SPBL",
-      ADAUSDT: "ADAUSDT_SPBL"
-    };
-
-    soundSelect.addEventListener('change', () => {
-      customSoundInput.style.display = soundSelect.value === 'custom' ? 'block' : 'none';
-    });
-    customSoundInput.addEventListener('change', () => {
-      const file = customSoundInput.files[0];
-      if (file) customSoundURL = URL.createObjectURL(file);
-    });
-
-    async function fetchCurrentPrice() {
-      const symbol = currentSymbol;
-      const exchange = currentExchange;
-      try {
-        let priceVal;
-        if (exchange === 'binance') {
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-          const data = await res.json();
-          priceVal = parseFloat(data.price);
-        } else if (exchange === 'upbit') {
-          const market = `KRW-${symbol.replace('USDT','')}`;
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
-          const res = await fetch(proxyUrl);
-          const data = await res.json();
-          priceVal = parseFloat(data[0].trade_price);
-        } else if (exchange === 'bitget') {
-          const market = bitgetSymbols[symbol];
-          const res = await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`);
-          const data = await res.json();
-          priceVal = parseFloat(data.data.close);
-        }
-        priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${exchange==='upbit'?'KRW':'USDT'}`;
-      } catch (e) {
-        console.error(e);
-        priceLabel.innerText = '현재가: - (불러오기 실패)';
-      }
-    }
-
-    exchangeSelect.addEventListener('change', () => {
-      currentExchange = exchangeSelect.value;
-      fetchCurrentPrice();
-    });
-    symbolSelect.addEventListener('change', () => {
-      currentSymbol = symbolSelect.value;
-      fetchCurrentPrice();
-    });
-
-    window.addEventListener('load', () => {
-      fetchCurrentPrice();
-      setInterval(fetchCurrentPrice, 5000);
-    });
-
-    document.getElementById('register-btn').addEventListener('click', () => {
-      const symbolText = symbolSelect.options[symbolSelect.selectedIndex].text;
-      const symbol = symbolSelect.value;
-      const target = parseFloat(document.getElementById('target-price').value);
-      const condition = document.getElementById('condition').value;
-      const frequency = document.getElementById('frequency').value;
-      const repeatInterval = parseInt(document.getElementById('repeat-interval').value);
-      const sound = soundSelect.value;
-      const conditionText = condition==='over'?'이상':'이하';
-      const intervalMap = {'interval-1m':60,'interval-5m':300};
-
-      if (!target || isNaN(target)) { result.innerText='❗ 설정가를 입력해주세요.'; return; }
-      const alertItem=document.createElement('div');
-      alertItem.className='alert-item';
-      alertItem.innerHTML=`<span>${symbolText} - ${target} ${conditionText}</span><button class='delete-btn'>삭제</button>`;
-      alertItem.querySelector('button').onclick=()=>alertItem.remove();
-      alertList.appendChild(alertItem);
-      result.innerText='✅ 알림이 등록되었습니다.';
-
-      async function checkCondition() {
-        try {
-          const exchange = currentExchange;
-          let current;
-          if (exchange === 'upbit') {
-            const market = `KRW-${symbol.replace('USDT','')}`;
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
-            const res = await fetch(proxyUrl);
-            const data = await res.json();
-            current = parseFloat(data[0].trade_price);
-          } else {
-            const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-            const data = await res.json();
-            current = parseFloat(data.price);
-          }
-          return (condition==='over'&&current>=target)||(condition==='under'&&current<=target);
-        } catch { return false; }
-      }
-      (async function loop(){
-        const matched=await checkCondition();
-        if(matched){
-          if(sound==='custom'&&customSoundURL)new Audio(customSoundURL).play();
-          else document.getElementById(`sound-${sound}`).play();
-          result.innerText='🎉 조건 만족! 알람 울림!';
-          if(frequency==='once')return;
-        }
-        if(frequency!=='once'){
-          let next=repeatInterval;
-          if(intervalMap[frequency])next=intervalMap[frequency];
-          setTimeout(loop,next*1000);
-        }
-      })();
-    });
+    const refreshLabel = document.getElementById('refresh-timer');
+    let countdown = 5;
+    setInterval(() => {
+      countdown--;
+      if (countdown <= 0) countdown = 5;
+      refreshLabel.innerText = `다음 변동까지: ${5 - countdown}초전`;
+    }, 1000);
   </script></body>
 </html>
