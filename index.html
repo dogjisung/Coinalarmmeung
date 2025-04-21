@@ -18,10 +18,8 @@
       margin: 5px auto; background: #eee; padding: 10px; border-radius: 6px;
       width: 90%; display: flex; justify-content: space-between; align-items: center;
     }
-    .delete-btn {
-      background-color: #ff4d4d; color: white; border: none;
-      padding: 5px 10px; border-radius: 4px; cursor: pointer;
-    }
+    .delete-btn { background-color: #ff4d4d; color: white; border: none;
+      padding: 5px 10px; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -30,7 +28,7 @@
 <label for="symbol">코인 선택</label> <select id="symbol"> <option value="BTCUSDT">비트코인 (BTC)</option> <option value="ETHUSDT">이더리움 (ETH)</option> <option value="SOLUSDT">솔라나 (SOL)</option> <option value="XRPUSDT">리플 (XRP)</option> <option value="ADAUSDT">에이다 (ADA)</option> </select>
 
   <p id="current-price">현재가: -</p>
-  <p id="refresh-timer">다음 변동까지: -초전</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
+  <p id="refresh-timer">다음 변동까지: 5초전</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
 
 <label for="condition">알림 조건</label> <select id="condition"> <option value="over">설정가 이상 도달 시</option> <option value="under">설정가 이하 도달 시</option> </select>
 
@@ -46,12 +44,55 @@
   <div id="alert-list"></div><audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio> <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio> <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
 
   <script>
+    const symbolSelect = document.getElementById('symbol');
+    const exchangeSelect = document.getElementById('exchange');
+    const priceLabel = document.getElementById('current-price');
     const refreshLabel = document.getElementById('refresh-timer');
-    let countdown = 5;
-    setInterval(() => {
-      countdown--;
-      if (countdown <= 0) countdown = 5;
-      refreshLabel.innerText = `다음 변동까지: ${5 - countdown}초전`;
-    }, 1000);
+    let timer = 5;
+    let currentSymbol = symbolSelect.value;
+    let currentExchange = exchangeSelect.value;
+
+    const bitgetSymbols = { BTCUSDT: 'BTCUSDT_SPBL', ETHUSDT: 'ETHUSDT_SPBL', SOLUSDT: 'SOLUSDT_SPBL', XRPUSDT: 'XRPUSDT_SPBL', ADAUSDT: 'ADAUSDT_SPBL' };
+
+    function updateTimer() {
+      refreshLabel.innerText = `다음 변동까지: ${timer}초전`;
+      timer = timer > 0 ? timer - 1 : 5;
+    }
+
+    async function fetchCurrentPrice() {
+      timer = 5; updateTimer();
+      const symbol = currentSymbol;
+      const exchange = currentExchange;
+      try {
+        let priceVal;
+        if (exchange === 'binance') {
+          const { price } = await (await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`)).json();
+          priceVal = parseFloat(price);
+        } else if (exchange === 'upbit') {
+          const market = `KRW-${symbol.replace('USDT','')}`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
+          const wrapper = await (await fetch(proxyUrl)).json();
+          const data = JSON.parse(wrapper.contents);
+          priceVal = parseFloat(data[0].trade_price);
+        } else {
+          const market = bitgetSymbols[symbol];
+          const { data } = await (await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`)).json();
+          priceVal = parseFloat(data.close);
+        }
+        priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${currentExchange==='upbit'?'KRW':'USDT'}`;
+      } catch (e) {
+        console.error(e);
+        priceLabel.innerText = '현재가: - (불러오기 실패)';
+      }
+    }
+
+    exchangeSelect.addEventListener('change', () => { currentExchange = exchangeSelect.value; fetchCurrentPrice(); });
+    symbolSelect.addEventListener('change', () => { currentSymbol = symbolSelect.value; fetchCurrentPrice(); });
+
+    window.addEventListener('load', () => {
+      fetchCurrentPrice();
+      setInterval(fetchCurrentPrice, 5000);
+      setInterval(updateTimer, 1000);
+    });
   </script></body>
 </html>
