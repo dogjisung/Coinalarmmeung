@@ -54,8 +54,12 @@
     const soundSelect = document.getElementById('sound-select');
     const customSoundInput = document.getElementById('custom-sound');
     let customSoundURL = null;
-    const allOrigins = 'https://api.allorigins.win/raw?url=';
-    const thingProxy = 'https://thingproxy.freeboard.io/fetch/';
+
+    const bitgetProxies = [
+      'https://api.allorigins.win/raw?url=',
+      'https://thingproxy.freeboard.io/fetch/',
+      'https://cors.bridged.cc/'
+    ];
 
     symbolSelect.addEventListener('change', fetchCurrentPrice);
     exchangeSelect.addEventListener('change', fetchCurrentPrice);
@@ -67,43 +71,43 @@
       if (file) customSoundURL = URL.createObjectURL(file);
     });
 
+    async function fetchBitgetPrice(symbol) {
+      const url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
+      for (let proxy of bitgetProxies) {
+        try {
+          const res = await fetch(proxy + encodeURIComponent(url));
+          const json = await res.json();
+          const data = Array.isArray(json.data) ? json.data[0] : json.data;
+          const priceVal = parseFloat(data.close || data.last || data.price);
+          if (!isNaN(priceVal)) return priceVal;
+        } catch (e) {}
+      }
+      throw new Error('Bitget fetch failed');
+    }
+
     async function fetchCurrentPrice() {
       const symbol = symbolSelect.value;
       const exchange = exchangeSelect.value;
       try {
+        let priceVal;
         if (exchange === 'binance') {
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
           const data = await res.json();
-          priceLabel.innerText = `현재가: ${parseFloat(data.price).toLocaleString()} USDT`;
+          priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
-          const market = "KRW-" + symbol.replace("USDT", "");
+          const market = `KRW-${symbol.replace('USDT','')}`;
           const res = await fetch(`https://api.upbit.com/v1/ticker?markets=${market}`);
           const data = await res.json();
-          priceLabel.innerText = `현재가: ${parseFloat(data[0].trade_price).toLocaleString()} KRW`;
+          priceVal = parseFloat(data[0].trade_price);
         } else if (exchange === 'bitget') {
-          const url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
-          // first try AllOrigins
-          let d;
-          try {
-            const r = await fetch(allOrigins + encodeURIComponent(url));
-            const j = await r.json();
-            d = Array.isArray(j.data) ? j.data[0] : j.data;
-          } catch (e) {
-            // fallback to ThingProxy
-            const r2 = await fetch(thingProxy + url);
-            const j2 = await r2.json();
-            d = Array.isArray(j2.data) ? j2.data[0] : j2.data;
-          }
-          const priceVal = parseFloat(d.close || d.last || d.price);
-          priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} USDT`;
+          priceVal = await fetchBitgetPrice(symbol);
         }
-      } catch (e) {
-        console.error('Price fetch error:', e);
-        priceLabel.innerText = "현재가: - (불러오기 실패)";
+        priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${exchange==='upbit'?'KRW':'USDT'}`;
+      } catch {
+        priceLabel.innerText = '현재가: - (불러오기 실패)';
       }
     }
 
-    // 실시간 5초마다 갱신
     window.addEventListener('load', () => {
       fetchCurrentPrice();
       setInterval(fetchCurrentPrice, 5000);
@@ -117,50 +121,39 @@
       const frequency = document.getElementById('frequency').value;
       const repeatInterval = parseInt(document.getElementById('repeat-interval').value);
       const sound = soundSelect.value;
-      const conditionText = condition === 'over' ? '이상' : '이하';
-      const intervalMap = { 'interval-1m': 60, 'interval-5m': 300 };
+      const conditionText = condition==='over'?'이상':'이하';
+      const intervalMap = {'interval-1m':60,'interval-5m':300};
 
-      if (!target || isNaN(target)) {
-        result.innerText = "❗ 설정가를 입력해주세요.";
-        return;
-      }
-
-      const alertItem = document.createElement('div');
-      alertItem.className = 'alert-item';
-      alertItem.innerHTML = `<span>${symbolText} - ${target} ${conditionText}</span><button class=\"delete-btn\">삭제</button>`;
-      alertItem.querySelector('button').onclick = () => alertItem.remove();
+      if (!target || isNaN(target)) { result.innerText='❗ 설정가를 입력해주세요.'; return; }
+      const alertItem=document.createElement('div');
+      alertItem.className='alert-item';
+      alertItem.innerHTML=`<span>${symbolText} - ${target} ${conditionText}</span><button class='delete-btn'>삭제</button>`;
+      alertItem.querySelector('button').onclick=()=>alertItem.remove();
       alertList.appendChild(alertItem);
-      result.innerText = "✅ 알림이 등록되었습니다.";
+      result.innerText='✅ 알림이 등록되었습니다.';
 
       async function checkCondition() {
         try {
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
           const data = await res.json();
           const current = parseFloat(data.price);
-          return (condition === 'over' && current >= target) || (condition === 'under' && current <= target);
-        } catch {
-          return false;
-        }
+          return (condition==='over'&&current>=target)||(condition==='under'&&current<=target);
+        } catch { return false; }
       }
-
-      async function loop() {
-        const matched = await checkCondition();
-        if (matched) {
-          if (sound === 'custom' && customSoundURL) {
-            new Audio(customSoundURL).play();
-          } else {
-            document.getElementById(`sound-${sound}`).play();
-          }
-          result.innerText = "🎉 조건 만족! 알람 울림!";
-          if (frequency === 'once') return;
+      (async function loop(){
+        const matched=await checkCondition();
+        if(matched){
+          if(sound==='custom'&&customSoundURL)new Audio(customSoundURL).play();
+          else document.getElementById(`sound-${sound}`).play();
+          result.innerText='🎉 조건 만족! 알람 울림!';
+          if(frequency==='once')return;
         }
-        if (frequency !== 'once') {
-          let next = repeatInterval;
-          if (intervalMap[frequency]) next = intervalMap[frequency];
-          setTimeout(loop, next * 1000);
+        if(frequency!=='once'){
+          let next=repeatInterval;
+          if(intervalMap[frequency])next=intervalMap[frequency];
+          setTimeout(loop,next*1000);
         }
-      }
-      loop();
+      })();
     });
   </script></body>
 </html>
