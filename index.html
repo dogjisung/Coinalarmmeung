@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="ko">
+<!DOCTYPE html><html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🔔코인 알람멍🔔</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f9f9f9; }
     h2 { text-align: center; color: #6a5acd; }
     label { display: block; margin-top: 15px; font-weight: bold; }
     select, input[type="number"], input[type="file"] {
-      width: 100%; padding: 10px; margin-top: 5px;
-      border: 1px solid #ccc; border-radius: 8px;
+      width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px;
     }
     .button-group { text-align: center; margin-top: 20px; }
     button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
@@ -27,66 +25,24 @@
   </style>
 </head>
 <body>
-  <h2>🔔코인 알람멍🔔</h2>
+  <h2>🔔코인 알람멍🔔</h2><label for="exchange">거래소 선택</label> <select id="exchange"> <option value="binance">바이낸스</option> <option value="upbit">업비트</option> <option value="bitget">비트겟</option> </select>
 
-  <label for="exchange">거래소 선택</label>
-  <select id="exchange">
-    <option value="binance">바이낸스</option>
-    <option value="upbit">업비트</option>
-    <option value="bitget">비트겟</option>
-  </select>
+<label for="symbol">코인 선택</label> <select id="symbol"> <option value="BTCUSDT">비트코인 (BTC)</option> <option value="ETHUSDT">이더리움 (ETH)</option> <option value="SOLUSDT">솔라나 (SOL)</option> <option value="XRPUSDT">리플 (XRP)</option> <option value="ADAUSDT">에이다 (ADA)</option> </select>
 
-  <label for="symbol">코인 선택</label>
-  <select id="symbol">
-    <option value="BTCUSDT">비트코인 (BTC)</option>
-    <option value="ETHUSDT">이더리움 (ETH)</option>
-    <option value="SOLUSDT">솔라나 (SOL)</option>
-    <option value="XRPUSDT">리플 (XRP)</option>
-    <option value="ADAUSDT">에이다 (ADA)</option>
-  </select>
+  <p id="current-price">현재가: -</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
 
-  <p id="current-price">현재가: -</p>
+<label for="condition">알림 조건</label> <select id="condition"> <option value="over">설정가 이상 도달 시</option> <option value="under">설정가 이하 도달 시</option> </select>
 
-  <label for="target-price">설정가</label>
-  <input type="number" id="target-price" placeholder="예: 30000" />
+<label for="frequency">알림 주기</label> <select id="frequency"> <option value="once">한 번만 알림</option> <option value="repeat">조건 만족할 때마다 알림</option> <option value="interval-1m">1분마다 알림</option> <option value="interval-5m">5분마다 알림</option> <option value="until-off">내가 끌 때까지</option> </select>
 
-  <label for="condition">알림 조건</label>
-  <select id="condition">
-    <option value="over">설정가 이상 도달 시</option>
-    <option value="under">설정가 이하 도달 시</option>
-  </select>
+<label for="repeat-interval">반복 간격 (초)</label> <input type="number" id="repeat-interval" value="10">
 
-  <label for="frequency">알림 주기</label>
-  <select id="frequency">
-    <option value="once">한 번만 알림</option>
-    <option value="repeat">조건 만족할 때마다 알림</option>
-    <option value="interval-1m">1분마다 알림</option>
-    <option value="interval-5m">5분마다 알림</option>
-    <option value="until-off">내가 끌 때까지</option>
-  </select>
-
-  <label for="repeat-interval">반복 간격 (초)</label>
-  <input type="number" id="repeat-interval" value="10" />
-
-  <label for="sound-select">알림 사운드</label>
-  <select id="sound-select">
-    <option value="1">🔔 기본 벨소리</option>
-    <option value="2">🚨 경고 알람</option>
-    <option value="3">📢 사이렌</option>
-    <option value="custom">🎵 내 파일 업로드</option>
-  </select>
-  <input type="file" id="custom-sound" accept="audio/*" style="display:none;" />
+<label for="sound-select">알림 사운드</label> <select id="sound-select"> <option value="1">🔔 기본 벨소리</option> <option value="2">🚨 경고 알람</option> <option value="3">📢 사이렌</option> <option value="custom">🎵 내 파일 업로드</option> </select> <input type="file" id="custom-sound" accept="audio/*" style="display:none;">
 
   <div class="button-group">
     <button id="register-btn">등록</button>
-  </div>
-
-  <div id="result"></div>
-  <div id="alert-list"></div>
-
-  <audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
-  <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio>
-  <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
+  </div>  <div id="result"></div>
+  <div id="alert-list"></div><audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio> <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio> <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
 
   <script>
     const symbolSelect = document.getElementById('symbol');
@@ -97,7 +53,14 @@
     const soundSelect = document.getElementById('sound-select');
     const customSoundInput = document.getElementById('custom-sound');
     let customSoundURL = null;
-    const proxy = 'https://api.allorigins.win/raw?url=';
+
+    const bitgetSymbols = {
+      BTCUSDT: "BTCUSDT_SPBL",
+      ETHUSDT: "ETHUSDT_SPBL",
+      SOLUSDT: "SOLUSDT_SPBL",
+      XRPUSDT: "XRPUSDT_SPBL",
+      ADAUSDT: "ADAUSDT_SPBL"
+    };
 
     symbolSelect.addEventListener('change', fetchCurrentPrice);
     exchangeSelect.addEventListener('change', fetchCurrentPrice);
@@ -113,30 +76,31 @@
       const symbol = symbolSelect.value;
       const exchange = exchangeSelect.value;
       try {
+        let priceVal;
         if (exchange === 'binance') {
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
           const data = await res.json();
-          priceLabel.innerText = `현재가: ${parseFloat(data.price).toLocaleString()} USDT`;
+          priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
-          const market = "KRW-" + symbol.replace("USDT", "");
-          const res = await fetch(`https://api.upbit.com/v1/ticker?markets=${market}`);
-          const data = await res.json();
-          priceLabel.innerText = `현재가: ${parseFloat(data[0].trade_price).toLocaleString()} KRW`;
+          const market = `KRW-${symbol.replace('USDT','')}`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
+          const res = await fetch(proxyUrl);
+          const wrapper = await res.json();
+          const data = JSON.parse(wrapper.contents);
+          priceVal = parseFloat(data[0].trade_price);
         } else if (exchange === 'bitget') {
-          const url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
-          const res = await fetch(proxy + encodeURIComponent(url));
-          const obj = await res.json();
-          const d = Array.isArray(obj.data) ? obj.data[0] : obj.data;
-          const priceVal = parseFloat(d.close || d.last || d.lastPrice || d.price);
-          priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} USDT`;
+          const market = bitgetSymbols[symbol];
+          const res = await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`);
+          const data = await res.json();
+          priceVal = parseFloat(data.data.close);
         }
+        priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${exchange==='upbit'?'KRW':'USDT'}`;
       } catch (e) {
-        console.error('Price fetch error:', e);
-        priceLabel.innerText = "현재가: - (불러오기 실패)";
+        console.error(e);
+        priceLabel.innerText = '현재가: - (불러오기 실패)';
       }
     }
 
-    // 실시간 5초마다 갱신
     window.addEventListener('load', () => {
       fetchCurrentPrice();
       setInterval(fetchCurrentPrice, 5000);
@@ -150,51 +114,39 @@
       const frequency = document.getElementById('frequency').value;
       const repeatInterval = parseInt(document.getElementById('repeat-interval').value);
       const sound = soundSelect.value;
-      const conditionText = condition === 'over' ? '이상' : '이하';
-      const intervalMap = { 'interval-1m': 60, 'interval-5m': 300 };
+      const conditionText = condition==='over'?'이상':'이하';
+      const intervalMap = {'interval-1m':60,'interval-5m':300};
 
-      if (!target || isNaN(target)) {
-        result.innerText = "❗ 설정가를 입력해주세요.";
-        return;
-      }
-
-      const alertItem = document.createElement('div');
-      alertItem.className = 'alert-item';
-      alertItem.innerHTML = `<span>${symbolText} - ${target} ${conditionText}</span><button class=\"delete-btn\">삭제</button>`;
-      alertItem.querySelector('button').onclick = () => alertItem.remove();
+      if (!target || isNaN(target)) { result.innerText='❗ 설정가를 입력해주세요.'; return; }
+      const alertItem=document.createElement('div');
+      alertItem.className='alert-item';
+      alertItem.innerHTML=`<span>${symbolText} - ${target} ${conditionText}</span><button class='delete-btn'>삭제</button>`;
+      alertItem.querySelector('button').onclick=()=>alertItem.remove();
       alertList.appendChild(alertItem);
-      result.innerText = "✅ 알림이 등록되었습니다.";
+      result.innerText='✅ 알림이 등록되었습니다.';
 
       async function checkCondition() {
         try {
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
           const data = await res.json();
           const current = parseFloat(data.price);
-          return (condition === 'over' && current >= target) || (condition === 'under' && current <= target);
-        } catch {
-          return false;
-        }
+          return (condition==='over'&&current>=target)||(condition==='under'&&current<=target);
+        } catch { return false; }
       }
-
-      async function loop() {
-        const matched = await checkCondition();
-        if (matched) {
-          if (sound === 'custom' && customSoundURL) {
-            new Audio(customSoundURL).play();
-          } else {
-            document.getElementById(`sound-${sound}`).play();
-          }
-          result.innerText = "🎉 조건 만족! 알람 울림!";
-          if (frequency === 'once') return;
+      (async function loop(){
+        const matched=await checkCondition();
+        if(matched){
+          if(sound==='custom'&&customSoundURL)new Audio(customSoundURL).play();
+          else document.getElementById(`sound-${sound}`).play();
+          result.innerText='🎉 조건 만족! 알람 울림!';
+          if(frequency==='once')return;
         }
-        if (frequency !== 'once') {
-          let next = repeatInterval;
-          if (intervalMap[frequency]) next = intervalMap[frequency];
-          setTimeout(loop, next * 1000);
+        if(frequency!=='once'){
+          let next=repeatInterval;
+          if(intervalMap[frequency])next=intervalMap[frequency];
+          setTimeout(loop,next*1000);
         }
-      }
-      loop();
+      })();
     });
-  </script>
-</body>
+  </script></body>
 </html>
