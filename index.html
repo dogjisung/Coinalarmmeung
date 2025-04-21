@@ -1,103 +1,72 @@
-<!DOCTYPE html><html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔔코인 알람멍🔔</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f9f9f9; }
-    h2 { text-align: center; color: #6a5acd; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    select, input[type="number"], input[type="file"] {
-      width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px;
-    }
-    .button-group { text-align: center; margin-top: 20px; }
-    button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
-    #register-btn { background-color: #6a5acd; color: white; }
-    #result, #alert-list { margin-top: 20px; font-weight: bold; text-align: center; }
-    .alert-item {
-      margin: 5px auto; background: #eee; padding: 10px; border-radius: 6px;
-      width: 90%; display: flex; justify-content: space-between; align-items: center;
-    }
-    .delete-btn { background-color: #ff4d4d; color: white; border: none;
-      padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-  </style>
-</head>
-<body>
-  <h2>🔔코인 알람멍🔔</h2><label for="exchange">거래소 선택</label> <select id="exchange"> <option value="binance">바이낸스</option> <option value="upbit">업비트</option> <option value="bitget">비트겟</option> </select>
+<title>🔔코인 알람멍🔔</title>
+<h2>🔔코인 알람멍🔔</h2><!-- 거래소 선택 --><label for="exchange">거래소 선택</label> <select id="exchange">
 
-<label for="symbol">코인 선택</label> <select id="symbol"> <option value="BTCUSDT">비트코인 (BTC)</option> <option value="ETHUSDT">이더리움 (ETH)</option> <option value="SOLUSDT">솔라나 (SOL)</option> <option value="XRPUSDT">리플 (XRP)</option> <option value="ADAUSDT">에이다 (ADA)</option> </select>
+  <option>바이낸스</option>
+  <option>업비트</option>
+  <option>비트겟</option>
+</select><!-- 코인 선택 --><label for="symbol">코인 선택</label> <select id="symbol">
 
-  <p id="current-price">현재가: -</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
+  <option>비트코인 (BTC)</option>
+  <option>이더리움 (ETH)</option>
+  <option>솔라나 (SOL)</option>
+</select><p id="price">현재가: -</p><label for="target">설정가</label> <input id="target" placeholder="예: 30000" />
 
-<label for="condition">알림 조건</label> <select id="condition"> <option value="over">설정가 이상 도달 시</option> <option value="under">설정가 이하 도달 시</option> </select>
+<label for="condition">알림 조건</label> <select id="condition">
 
-<label for="frequency">알림 주기</label> <select id="frequency"> <option value="once">한 번만 알림</option> <option value="repeat">조건 만족할 때마다 알림</option> <option value="interval-1m">1분마다 알림</option> <option value="interval-5m">5분마다 알림</option> <option value="until-off">내가 끌 때까지</option> </select>
+  <option>설정가 이상 도달 시</option>
+  <option>설정가 이하 도달 시</option>
+</select><label for="repeat">알림 주기</label> <select id="repeat">
 
-<label for="repeat-interval">반복 간격 (초)</label> <input type="number" id="repeat-interval" value="10">
+  <option>한 번만 알림</option>
+  <option>내가 끌 때까지</option>
+</select><label for="interval">반복 간격 (초)</label> <input id="interval" value="10" />
 
-<label for="sound-select">알림 사운드</label> <select id="sound-select"> <option value="1">🔔 기본 벨소리</option> <option value="2">🚨 경고 알람</option> <option value="3">📢 사이렌</option> <option value="custom">🎵 내 파일 업로드</option> </select> <input type="file" id="custom-sound" accept="audio/*" style="display:none;">
+<label for="sound">알림 사운드</label> <select id="sound">
 
-  <div class="button-group">
-    <button id="register-btn">등록</button>
-  </div>  <div id="result"></div>
-  <div id="alert-list"></div><audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio> <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio> <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
+  <option>🔔 기본 벨소리</option>
+</select><button onclick="registerAlert()">등록</button>
 
-  <script>
-    const symbolSelect = document.getElementById('symbol');
-    const exchangeSelect = document.getElementById('exchange');
-    const priceLabel = document.getElementById('current-price');
-    let currentSymbol = symbolSelect.value;
-    let currentExchange = exchangeSelect.value;
+<ul id="alerts"></ul><script>
+const exchangeEl = document.getElementById('exchange');
+const symbolEl = document.getElementById('symbol');
+const priceEl = document.getElementById('price');
 
-    const bitgetSymbols = {
-      BTCUSDT: 'BTCUSDT_SPBL',
-      ETHUSDT: 'ETHUSDT_SPBL',
-      SOLUSDT: 'SOLUSDT_SPBL',
-      XRPUSDT: 'XRPUSDT_SPBL',
-      ADAUSDT: 'ADAUSDT_SPBL'
-    };
+async function fetchPrice() {
+  const exchange = exchangeEl.value;
+  const symbolMap = {
+    '비트코인 (BTC)': 'BTC',
+    '이더리움 (ETH)': 'ETH',
+    '솔라나 (SOL)': 'SOL'
+  };
+  const symbol = symbolMap[symbolEl.value];
 
-    async function fetchCurrentPrice() {
-      const symbol = currentSymbol;
-      const exchange = currentExchange;
-      try {
-        let priceVal;
-        if (exchange === 'binance') {
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-          const data = await res.json();
-          priceVal = parseFloat(data.price);
-        } else if (exchange === 'upbit') {
-          const market = `KRW-${symbol.replace('USDT','')}`;
-          // allorigins get proxy with wrapper.contents JSON string
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
-          const wrapper = await fetch(proxyUrl).then(res => res.json());
-          const data = JSON.parse(wrapper.contents);
-          priceVal = parseFloat(data[0].trade_price);
-        } else {
-          const market = bitgetSymbols[symbol];
-          const res = await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`);
-          const data = await res.json();
-          priceVal = parseFloat(data.data.close);
-        }
-        priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${currentExchange==='upbit'?'KRW':'USDT'}`;
-      } catch (e) {
-        console.error(e);
-        priceLabel.innerText = '현재가: - (불러오기 실패)';
-      }
+  try {
+    let url = '';
+    if (exchange === '바이낸스') {
+      url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`;
+    } else if (exchange === '업비트') {
+      const market = `KRW-${symbol}`;
+      url = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
+    } else if (exchange === '비트겟') {
+      url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
     }
 
-    exchangeSelect.addEventListener('change', () => {
-      currentExchange = exchangeSelect.value;
-      fetchCurrentPrice();
-    });
-    symbolSelect.addEventListener('change', () => {
-      currentSymbol = symbolSelect.value;
-      fetchCurrentPrice();
-    });
+    const res = await fetch(url);
+    const data = await res.json();
+    let price = '-';
+    if (exchange === '바이낸스') price = parseFloat(data.price).toLocaleString();
+    if (exchange === '업비트') price = parseFloat(data[0].trade_price).toLocaleString();
+    if (exchange === '비트겟') price = parseFloat(data.data.close).toLocaleString();
 
-    window.addEventListener('load', () => {
-      fetchCurrentPrice();
-      setInterval(fetchCurrentPrice, 5000);
-    });
-  </script></body>
-</html>
+    const unit = exchange === '업비트' ? 'KRW' : 'USDT';
+    priceEl.innerText = `현재가: ${price} ${unit}`;
+  } catch (e) {
+    priceEl.innerText = '현재가: - (불러오기 실패)';
+  }
+}
+
+setInterval(fetchPrice, 5000);
+exchangeEl.addEventListener('change', fetchPrice);
+symbolEl.addEventListener('change', fetchPrice);
+fetchPrice();
+</script>
