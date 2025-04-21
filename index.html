@@ -1,15 +1,14 @@
 <!DOCTYPE html><html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🔔코인 알람멍🔔</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f9f9f9; }
     h2 { text-align: center; color: #6a5acd; }
     label { display: block; margin-top: 15px; font-weight: bold; }
     select, input[type="number"], input[type="file"] {
-      width: 100%; padding: 10px; margin-top: 5px;
-      border: 1px solid #ccc; border-radius: 8px;
+      width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px;
     }
     .button-group { text-align: center; margin-top: 20px; }
     button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
@@ -55,11 +54,13 @@
     const customSoundInput = document.getElementById('custom-sound');
     let customSoundURL = null;
 
-    const bitgetProxies = [
-      'https://api.allorigins.win/raw?url=',
-      'https://thingproxy.freeboard.io/fetch/',
-      'https://cors.bridged.cc/'
-    ];
+    const bitgetSymbols = {
+      BTCUSDT: "BTCUSDT_SPBL",
+      ETHUSDT: "ETHUSDT_SPBL",
+      SOLUSDT: "SOLUSDT_SPBL",
+      XRPUSDT: "XRPUSDT_SPBL",
+      ADAUSDT: "ADAUSDT_SPBL"
+    };
 
     symbolSelect.addEventListener('change', fetchCurrentPrice);
     exchangeSelect.addEventListener('change', fetchCurrentPrice);
@@ -70,20 +71,6 @@
       const file = customSoundInput.files[0];
       if (file) customSoundURL = URL.createObjectURL(file);
     });
-
-    async function fetchBitgetPrice(symbol) {
-      const url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
-      for (let proxy of bitgetProxies) {
-        try {
-          const res = await fetch(proxy + encodeURIComponent(url));
-          const json = await res.json();
-          const data = Array.isArray(json.data) ? json.data[0] : json.data;
-          const priceVal = parseFloat(data.close || data.last || data.price);
-          if (!isNaN(priceVal)) return priceVal;
-        } catch (e) {}
-      }
-      throw new Error('Bitget fetch failed');
-    }
 
     async function fetchCurrentPrice() {
       const symbol = symbolSelect.value;
@@ -100,10 +87,14 @@
           const data = await res.json();
           priceVal = parseFloat(data[0].trade_price);
         } else if (exchange === 'bitget') {
-          priceVal = await fetchBitgetPrice(symbol);
+          const market = bitgetSymbols[symbol];
+          const res = await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`);
+          const data = await res.json();
+          priceVal = parseFloat(data.data.close);
         }
         priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${exchange==='upbit'?'KRW':'USDT'}`;
-      } catch {
+      } catch (e) {
+        console.error(e);
         priceLabel.innerText = '현재가: - (불러오기 실패)';
       }
     }
