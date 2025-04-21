@@ -54,6 +54,7 @@
     const soundSelect = document.getElementById('sound-select');
     const customSoundInput = document.getElementById('custom-sound');
     let customSoundURL = null;
+    const proxy = 'https://api.allorigins.win/raw?url=';
 
     symbolSelect.addEventListener('change', fetchCurrentPrice);
     exchangeSelect.addEventListener('change', fetchCurrentPrice);
@@ -79,14 +80,22 @@
           const data = await res.json();
           priceLabel.innerText = `현재가: ${parseFloat(data[0].trade_price).toLocaleString()} KRW`;
         } else if (exchange === 'bitget') {
-          const res = await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`);
-          const data = await res.json();
-          priceLabel.innerText = `현재가: ${parseFloat(data.data.close).toLocaleString()} USDT`;
+          const url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
+          const res = await fetch(proxy + encodeURIComponent(url));
+          const obj = await res.json();
+          const d = obj.data || (obj.data && obj.data.data);
+          const close = parseFloat(d.close);
+          priceLabel.innerText = `현재가: ${close.toLocaleString()} USDT`;
         }
       } catch {
         priceLabel.innerText = "현재가: - (불러오기 실패)";
       }
     }
+
+    window.addEventListener('load', () => {
+      fetchCurrentPrice();
+      setInterval(fetchCurrentPrice, 5000);
+    });
 
     document.getElementById('register-btn').addEventListener('click', () => {
       const symbolText = symbolSelect.options[symbolSelect.selectedIndex].text;
@@ -106,7 +115,7 @@
 
       const alertItem = document.createElement('div');
       alertItem.className = 'alert-item';
-      alertItem.innerHTML = `<span>${symbolText} - ${target} ${conditionText}</span><button class="delete-btn">삭제</button>`;
+      alertItem.innerHTML = `<span>${symbolText} - ${target} ${conditionText}</span><button class=\"delete-btn\">삭제</button>`;
       alertItem.querySelector('button').onclick = () => alertItem.remove();
       alertList.appendChild(alertItem);
       result.innerText = "✅ 알림이 등록되었습니다.";
@@ -141,7 +150,5 @@
       }
       loop();
     });
-
-    window.addEventListener('load', fetchCurrentPrice);
   </script></body>
 </html>
