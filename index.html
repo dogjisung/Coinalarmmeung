@@ -62,8 +62,6 @@
       ADAUSDT: "ADAUSDT_SPBL"
     };
 
-    symbolSelect.addEventListener('change', fetchCurrentPrice);
-    exchangeSelect.addEventListener('change', fetchCurrentPrice);
     soundSelect.addEventListener('change', () => {
       customSoundInput.style.display = soundSelect.value === 'custom' ? 'block' : 'none';
     });
@@ -102,8 +100,8 @@
     }
 
     window.addEventListener('load', () => {
-      fetchCurrentPrice();
       setInterval(fetchCurrentPrice, 5000);
+      fetchCurrentPrice();
     });
 
     document.getElementById('register-btn').addEventListener('click', () => {
@@ -127,9 +125,20 @@
 
       async function checkCondition() {
         try {
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-          const data = await res.json();
-          const current = parseFloat(data.price);
+          const exchange = exchangeSelect.value;
+          let current;
+          if (exchange === 'upbit') {
+            const market = `KRW-${symbol.replace('USDT','')}`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
+            const res = await fetch(proxyUrl);
+            const wrapper = await res.json();
+            const data = JSON.parse(wrapper.contents);
+            current = parseFloat(data[0].trade_price);
+          } else {
+            const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+            const data = await res.json();
+            current = parseFloat(data.price);
+          }
           return (condition==='over'&&current>=target)||(condition==='under'&&current<=target);
         } catch { return false; }
       }
