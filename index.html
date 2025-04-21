@@ -83,7 +83,9 @@
           priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
           const market = `KRW-${symbol.replace('USDT','')}`;
-          const res = await fetch(`https://api.upbit.com/v1/ticker?markets=${market}`);
+          const res = await fetch(`https://proxy.cors.sh/https://api.upbit.com/v1/ticker?markets=${market}`, {
+            headers: { 'x-cors-api-key': 'temporary-cors-key' }
+          });
           const data = await res.json();
           priceVal = parseFloat(data[0].trade_price);
         } else if (exchange === 'bitget') {
