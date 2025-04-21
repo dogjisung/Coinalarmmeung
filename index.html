@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔔코인 알람멍🔔</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f8f9fa;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #6a5acd;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    .button-group {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px 0 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #register-btn {
+      background-color: #6a5acd;
+      color: white;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔔코인 알람멍🔔</h2>
+
+  <label for="symbol">코인 심볼 (예: BTCUSDT)</label>
+  <input type="text" id="symbol" placeholder="BTCUSDT" />
+
+  <label for="target-price">설정가</label>
+  <input type="number" id="target-price" placeholder="예: 30000" />
+
+  <label for="condition">알림 조건</label>
+  <select id="condition">
+    <option value="over">설정가 이상 도달 시</option>
+    <option value="under">설정가 이하 도달 시</option>
+  </select>
+
+  <label for="indicator">지표 알림</label>
+  <select id="indicator">
+    <option value="none">지표 사용 안 함</option>
+    <option value="rsi-over">RSI 70 이상</option>
+    <option value="rsi-under">RSI 30 이하</option>
+    <option value="macd-cross">MACD 시그널 상향 돌파</option>
+  </select>
+
+  <label for="interval">봉 차트 간격</label>
+  <select id="interval">
+    <option value="1m">1분봉</option>
+    <option value="5m">5분봉</option>
+    <option value="15m">15분봉</option>
+    <option value="30m">30분봉</option>
+    <option value="1h">1시간봉</option>
+    <option value="4h">4시간봉</option>
+    <option value="1d">하루봉</option>
+  </select>
+
+  <label for="frequency">알림 주기</label>
+  <select id="frequency">
+    <option value="once">한 번만 알림</option>
+    <option value="repeat">조건 만족할 때마다 알림</option>
+    <option value="until-off">내가 끌 때까지</option>
+  </select>
+
+  <label for="repeat-interval">반복 간격 (초)</label>
+  <input type="number" id="repeat-interval" value="10" />
+
+  <label for="sound-select">알림 사운드</label>
+  <select id="sound-select">
+    <option value="1">🔔 기본 벨소리</option>
+    <option value="2">🚨 경고 알람</option>
+    <option value="3">📢 사이렌</option>
+  </select>
+
+  <div class="button-group">
+    <button id="register-btn">등록</button>
+  </div>
+
+  <div id="result"></div>
+
+  <audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+  <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio>
+  <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
+
+  <script>
+    document.getElementById('register-btn').addEventListener('click', async () => {
+      const symbol = document.getElementById('symbol').value.toUpperCase();
+      const target = parseFloat(document.getElementById('target-price').value);
+      const condition = document.getElementById('condition').value;
+      const indicator = document.getElementById('indicator').value;
+      const interval = document.getElementById('interval').value;
+      const frequency = document.getElementById('frequency').value;
+      const repeatInterval = parseInt(document.getElementById('repeat-interval').value);
+      const sound = document.getElementById('sound-select').value;
+
+      const checkCondition = async () => {
+        const priceRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        const priceData = await priceRes.json();
+        const currentPrice = parseFloat(priceData.price);
+
+        let matched = false;
+
+        if (condition === 'over' && currentPrice >= target) matched = true;
+        if (condition === 'under' && currentPrice <= target) matched = true;
+
+        if (indicator !== 'none') {
+          const klinesRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+          const klines = await klinesRes.json();
+          const closes = klines.map(k => parseFloat(k[4]));
+
+          if (indicator === 'rsi-over' || indicator === 'rsi-under') {
+            const rsi = calculateRSI(closes);
+            if (indicator === 'rsi-over' && rsi >= 70) matched = true;
+            if (indicator === 'rsi-under' && rsi <= 30) matched = true;
+          }
+          if (indicator === 'macd-cross') {
+            const macd = calculateMACDCross(closes);
+            if (macd) matched = true;
+          }
+        }
+
+        if (matched) {
+          document.getElementById(`sound-${sound}`).play();
+          document.getElementById('result').innerText = '🎉 조건 만족! 알람 발생!';
+          return frequency !== 'repeat';
+        }
+
+        return false;
+      };
+
+      const loop = async () => {
+        const shouldStop = await checkCondition();
+        if (!shouldStop && frequency !== 'once') {
+          setTimeout(loop, repeatInterval * 1000);
+        }
+      };
+
+      loop();
+    });
+
+    function calculateRSI(closes) {
+      let gains = 0, losses = 0;
+      for (let i = closes.length - 15; i < closes.length - 1; i++) {
+        const change = closes[i + 1] - closes[i];
+        if (change > 0) gains += change;
+        else losses -= change;
+      }
+      const avgGain = gains / 14;
+      const avgLoss = losses / 14;
+      const rs = avgGain / avgLoss;
+      return 100 - (100 / (1 + rs));
+    }
+
+    function calculateMACDCross(closes) {
+      const ema = (arr, n) => {
+        const k = 2 / (n + 1);
+        let emaArr = [arr[0]];
+        for (let i = 1; i < arr.length; i++) {
+          emaArr.push(arr[i] * k + emaArr[i - 1] * (1 - k));
+        }
+        return emaArr;
+      };
+      const ema12 = ema(closes, 12);
+      const ema26 = ema(closes, 26);
+      const macd = ema12.map((v, i) => v - ema26[i]);
+      const signal = ema(macd, 9);
+      return macd[macd.length - 2] < signal[signal.length - 2] &&
+             macd[macd.length - 1] > signal[signal.length - 1];
+    }
+  </script>
+</body>
+</html>
