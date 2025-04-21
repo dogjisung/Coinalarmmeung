@@ -53,6 +53,8 @@
     const soundSelect = document.getElementById('sound-select');
     const customSoundInput = document.getElementById('custom-sound');
     let customSoundURL = null;
+    let currentSymbol = symbolSelect.value;
+    let currentExchange = exchangeSelect.value;
 
     const bitgetSymbols = {
       BTCUSDT: "BTCUSDT_SPBL",
@@ -71,8 +73,8 @@
     });
 
     async function fetchCurrentPrice() {
-      const symbol = symbolSelect.value;
-      const exchange = exchangeSelect.value;
+      const symbol = currentSymbol;
+      const exchange = currentExchange;
       try {
         let priceVal;
         if (exchange === 'binance') {
@@ -81,10 +83,9 @@
           priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
           const market = `KRW-${symbol.replace('USDT','')}`;
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
           const res = await fetch(proxyUrl);
-          const wrapper = await res.json();
-          const data = JSON.parse(wrapper.contents);
+          const data = await res.json();
           priceVal = parseFloat(data[0].trade_price);
         } else if (exchange === 'bitget') {
           const market = bitgetSymbols[symbol];
@@ -99,9 +100,18 @@
       }
     }
 
-    window.addEventListener('load', () => {
-      setInterval(fetchCurrentPrice, 5000);
+    exchangeSelect.addEventListener('change', () => {
+      currentExchange = exchangeSelect.value;
       fetchCurrentPrice();
+    });
+    symbolSelect.addEventListener('change', () => {
+      currentSymbol = symbolSelect.value;
+      fetchCurrentPrice();
+    });
+
+    window.addEventListener('load', () => {
+      fetchCurrentPrice();
+      setInterval(fetchCurrentPrice, 5000);
     });
 
     document.getElementById('register-btn').addEventListener('click', () => {
@@ -125,14 +135,13 @@
 
       async function checkCondition() {
         try {
-          const exchange = exchangeSelect.value;
+          const exchange = currentExchange;
           let current;
           if (exchange === 'upbit') {
             const market = `KRW-${symbol.replace('USDT','')}`;
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
             const res = await fetch(proxyUrl);
-            const wrapper = await res.json();
-            const data = JSON.parse(wrapper.contents);
+            const data = await res.json();
             current = parseFloat(data[0].trade_price);
           } else {
             const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
