@@ -83,15 +83,17 @@
           const url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
           const res = await fetch(proxy + encodeURIComponent(url));
           const obj = await res.json();
-          const d = obj.data || (obj.data && obj.data.data);
-          const close = parseFloat(d.close);
-          priceLabel.innerText = `현재가: ${close.toLocaleString()} USDT`;
+          const d = Array.isArray(obj.data) ? obj.data[0] : obj.data;
+          const priceVal = parseFloat(d.close || d.last || d.lastPrice || d.price);
+          priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} USDT`;
         }
-      } catch {
+      } catch (e) {
+        console.error('Price fetch error:', e);
         priceLabel.innerText = "현재가: - (불러오기 실패)";
       }
     }
 
+    // 실시간 5초마다 갱신
     window.addEventListener('load', () => {
       fetchCurrentPrice();
       setInterval(fetchCurrentPrice, 5000);
