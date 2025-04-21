@@ -68,11 +68,10 @@
           priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
           const market = `KRW-${symbol.replace('USDT','')}`;
-          // allorigins raw proxy with timestamp to prevent caching
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
-          const res = await fetch(proxyUrl);
-          const data = await res.json();
-          // Upbit returns array
+          // allorigins get proxy with wrapper.contents JSON string
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
+          const wrapper = await fetch(proxyUrl).then(res => res.json());
+          const data = JSON.parse(wrapper.contents);
           priceVal = parseFloat(data[0].trade_price);
         } else {
           const market = bitgetSymbols[symbol];
