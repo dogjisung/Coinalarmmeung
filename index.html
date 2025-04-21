@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ko">
+<!DOCTYPE html><html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +13,7 @@
     .button-group { text-align: center; margin-top: 20px; }
     button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
     #register-btn { background-color: #6a5acd; color: white; }
-    #result, #alert-list, #refresh-timer { margin-top: 20px; font-weight: bold; text-align: center; }
+    #result, #alert-list { margin-top: 20px; font-weight: bold; text-align: center; }
     .alert-item {
       margin: 5px auto; background: #eee; padding: 10px; border-radius: 6px;
       width: 90%; display: flex; justify-content: space-between; align-items: center;
@@ -24,103 +23,60 @@
   </style>
 </head>
 <body>
-  <h2>🔔코인 알람멍🔔</h2>
+  <h2>🔔코인 알람멍🔔</h2><label for="exchange">거래소 선택</label> <select id="exchange"> <option value="binance">바이낸스</option> <option value="upbit">업비트</option> <option value="bitget">비트겟</option> </select>
 
-  <label for="exchange">거래소 선택</label>
-  <select id="exchange">
-    <option value="binance">바이낸스</option>
-    <option value="upbit">업비트</option>
-    <option value="bitget">비트겟</option>
-  </select>
+<label for="symbol">코인 선택</label> <select id="symbol"> <option value="BTCUSDT">비트코인 (BTC)</option> <option value="ETHUSDT">이더리움 (ETH)</option> <option value="SOLUSDT">솔라나 (SOL)</option> <option value="XRPUSDT">리플 (XRP)</option> <option value="ADAUSDT">에이다 (ADA)</option> </select>
 
-  <label for="symbol">코인 선택</label>
-  <select id="symbol">
-    <option value="BTCUSDT">비트코인 (BTC)</option>
-    <option value="ETHUSDT">이더리움 (ETH)</option>
-    <option value="SOLUSDT">솔라나 (SOL)</option>
-    <option value="XRPUSDT">리플 (XRP)</option>
-    <option value="ADAUSDT">에이다 (ADA)</option>
-  </select>
+  <p id="current-price">현재가: -</p><label for="target-price">설정가</label> <input type="number" id="target-price" placeholder="예: 30000">
 
-  <p id="current-price">현재가: -</p>
-  <p id="refresh-timer">다음 변동까지: 10초전</p>
+<label for="condition">알림 조건</label> <select id="condition"> <option value="over">설정가 이상 도달 시</option> <option value="under">설정가 이하 도달 시</option> </select>
 
-  <label for="target-price">설정가</label>
-  <input type="number" id="target-price" placeholder="예: 30000">
+<label for="frequency">알림 주기</label> <select id="frequency"> <option value="once">한 번만 알림</option> <option value="repeat">조건 만족할 때마다 알림</option> <option value="interval-1m">1분마다 알림</option> <option value="interval-5m">5분마다 알림</option> <option value="until-off">내가 끌 때까지</option> </select>
 
-  <label for="condition">알림 조건</label>
-  <select id="condition">
-    <option value="over">설정가 이상 도달 시</option>
-    <option value="under">설정가 이하 도달 시</option>
-  </select>
+<label for="repeat-interval">반복 간격 (초)</label> <input type="number" id="repeat-interval" value="10">
 
-  <label for="frequency">알림 주기</label>
-  <select id="frequency">
-    <option value="once">한 번만 알림</option>
-    <option value="repeat">조건 만족할 때마다 알림</option>
-    <option value="interval-1m">1분마다 알림</option>
-    <option value="interval-5m">5분마다 알림</option>
-    <option value="until-off">내가 끌 때까지</option>
-  </select>
-
-  <label for="repeat-interval">반복 간격 (초)</label>
-  <input type="number" id="repeat-interval" value="10">
-
-  <label for="sound-select">알림 사운드</label>
-  <select id="sound-select">
-    <option value="1">🔔 기본 벨소리</option>
-    <option value="2">🚨 경고 알람</option>
-    <option value="3">📢 사이렌</option>
-    <option value="custom">🎵 내 파일 업로드</option>
-  </select>
-  <input type="file" id="custom-sound" accept="audio/*" style="display:none;">
+<label for="sound-select">알림 사운드</label> <select id="sound-select"> <option value="1">🔔 기본 벨소리</option> <option value="2">🚨 경고 알람</option> <option value="3">📢 사이렌</option> <option value="custom">🎵 내 파일 업로드</option> </select> <input type="file" id="custom-sound" accept="audio/*" style="display:none;">
 
   <div class="button-group">
     <button id="register-btn">등록</button>
-  </div>
-
-  <div id="result"></div>
-  <div id="alert-list"></div>
-
-  <audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
-  <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio>
-  <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
+  </div>  <div id="result"></div>
+  <div id="alert-list"></div><audio id="sound-1" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio> <audio id="sound-2" src="https://www.soundjay.com/button/sounds/beep-07.mp3"></audio> <audio id="sound-3" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
 
   <script>
     const symbolSelect = document.getElementById('symbol');
     const exchangeSelect = document.getElementById('exchange');
     const priceLabel = document.getElementById('current-price');
-    const refreshLabel = document.getElementById('refresh-timer');
-    let timer = 10;
-    const total = 10;
     let currentSymbol = symbolSelect.value;
     let currentExchange = exchangeSelect.value;
 
-    const bitgetSymbols = { BTCUSDT: 'BTCUSDT_SPBL', ETHUSDT: 'ETHUSDT_SPBL', SOLUSDT: 'SOLUSDT_SPBL', XRPUSDT: 'XRPUSDT_SPBL', ADAUSDT: 'ADAUSDT_SPBL' };
-
-    function updateTimer() {
-      refreshLabel.innerText = `다음 변동까지: ${timer}초전`;
-      timer = timer > 1 ? timer - 1 : total;
-    }
+    const bitgetSymbols = {
+      BTCUSDT: 'BTCUSDT_SPBL',
+      ETHUSDT: 'ETHUSDT_SPBL',
+      SOLUSDT: 'SOLUSDT_SPBL',
+      XRPUSDT: 'XRPUSDT_SPBL',
+      ADAUSDT: 'ADAUSDT_SPBL'
+    };
 
     async function fetchCurrentPrice() {
-      timer = total; updateTimer();
       const symbol = currentSymbol;
       const exchange = currentExchange;
       try {
         let priceVal;
         if (exchange === 'binance') {
-          const { price } = await (await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`)).json();
-          priceVal = parseFloat(price);
+          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+          const data = await res.json();
+          priceVal = parseFloat(data.price);
         } else if (exchange === 'upbit') {
           const market = `KRW-${symbol.replace('USDT','')}`;
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}&t=${Date.now()}`;
-          const data = await (await fetch(proxyUrl)).json();
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=${market}`)}`;
+          const res = await fetch(proxyUrl);
+          const data = await res.json();
           priceVal = parseFloat(data[0].trade_price);
         } else {
           const market = bitgetSymbols[symbol];
-          const { data } = await (await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`)).json();
-          priceVal = parseFloat(data.close);
+          const res = await fetch(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${market}`);
+          const data = await res.json();
+          priceVal = parseFloat(data.data.close);
         }
         priceLabel.innerText = `현재가: ${priceVal.toLocaleString()} ${currentExchange==='upbit'?'KRW':'USDT'}`;
       } catch (e) {
@@ -129,14 +85,18 @@
       }
     }
 
-    exchangeSelect.addEventListener('change', () => { currentExchange = exchangeSelect.value; fetchCurrentPrice(); });
-    symbolSelect.addEventListener('change', () => { currentSymbol = symbolSelect.value; fetchCurrentPrice(); });
+    exchangeSelect.addEventListener('change', () => {
+      currentExchange = exchangeSelect.value;
+      fetchCurrentPrice();
+    });
+    symbolSelect.addEventListener('change', () => {
+      currentSymbol = symbolSelect.value;
+      fetchCurrentPrice();
+    });
 
     window.addEventListener('load', () => {
       fetchCurrentPrice();
-      setInterval(fetchCurrentPrice, total*1000);
-      setInterval(updateTimer, 1000);
+      setInterval(fetchCurrentPrice, 5000);
     });
-  </script>
-</body>
+  </script></body>
 </html>
