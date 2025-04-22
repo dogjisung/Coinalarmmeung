@@ -9,7 +9,7 @@
     h1 { color: #7c4dff; margin-bottom: 20px; }
     .row { margin-bottom: 15px; text-align: left; }
     label { font-weight: bold; display: block; margin-bottom: 5px; }
-    select, input, button { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+    select, input, button { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
     button { background: #7c4dff; color: white; border: none; cursor: pointer; }
     #price { font-weight: bold; margin: 20px 0; font-size: 18px; }
     #alert-list { text-align: left; margin-top: 20px; }
@@ -78,8 +78,8 @@
 
     const symbols = {
       binance: ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX'],
-      bitget: ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX'],
-      upbit: ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX']
+      bitget:  ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX'],
+      upbit:   ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX']
     };
 
     function updateSymbolOptions() {
@@ -88,7 +88,8 @@
         const opt = document.createElement('option');
         opt.value = sym;
         opt.textContent = {
-          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)', XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
+          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)',
+          XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
         }[sym];
         symbolSelect.appendChild(opt);
       });
@@ -105,16 +106,16 @@
         let price;
         if (exchange === 'binance') {
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
-          price = parseFloat((await res.json()).price);
-        } else if (exchange === 'bitget') {
-          // AllOrigins raw 프록시 사용, 캐시 방지 파라미터 추가
-          const apiUrl = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}&t=${Date.now()}`;
-          const res = await fetch(proxyUrl);
           const data = await res.json();
+          price = parseFloat(data.price);
+        } else if (exchange === 'bitget') {
+          const apiUrl = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT&cb=${Date.now()}`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+          const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data.data.close);
         } else {
-          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${symbol}`);
+          const apiUrl = `https://api.upbit.com/v1/ticker?markets=KRW-${symbol}&cb=${Date.now()}`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
           const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data[0].trade_price);
         }
@@ -138,9 +139,8 @@
     function renderAlertList() {
       alertList.innerHTML = '';
       alerts.forEach((a,i) => {
-        const div = document.createElement('div');
-        div.className = 'alert-item';
-        div.innerHTML = `<span>${a.symbol} - ${formatPrice(a.target)} ${a.condition === 'over' ? '이상' : '이하'}</span><button class='delete-btn' onclick='deleteAlert(${i})'>삭제</button>`;
+        const div = document.createElement('div'); div.className='alert-item';
+        div.innerHTML = `<span>${a.symbol} - ${formatPrice(a.target)} ${a.condition==='over'?'이상':'이하'}</span><button class='delete-btn' onclick='deleteAlert(${i})'>삭제</button>`;
         alertList.appendChild(div);
       });
     }
@@ -155,7 +155,9 @@
         condition: document.getElementById('condition').value,
         repeat: document.getElementById('repeat').value,
         interval: parseInt(document.getElementById('interval').value)
-      }; if (!a.target) return; alerts.push(a); renderAlertList();
+      };
+      if (!a.target) return;
+      alerts.push(a); renderAlertList();
     };
 
     exchangeSelect.onchange = () => { updateSymbolOptions(); fetchPrice(); };
