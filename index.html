@@ -107,8 +107,10 @@
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
           price = parseFloat((await res.json()).price);
         } else if (exchange === 'bitget') {
-          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`);
-          const data = await (await fetch(proxyUrl)).json();
+          // ThingProxy를 이용한 CORS 우회
+          const proxyUrl = `https://thingproxy.freeboard.io/fetch/https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
+          const res = await fetch(proxyUrl);
+          const data = await res.json();
           price = parseFloat(data.data.close);
         } else {
           const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${symbol}`);
