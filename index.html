@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🔔코인 알람멍🔔</title>
+  <title>🔔 코인 알람멍 🔔</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; max-width: 400px; margin: auto; }
     label { display: block; margin-top: 1rem; }
-    select, input, button { width: 100%; padding: .5rem; margin-top: .25rem; }
+    select, button { width: 100%; padding: .5rem; margin-top: .25rem; }
     #price { font-size: 1.25rem; margin-top: 1rem; }
   </style>
 </head>
 <body>
 
-  <h1>🔔코인 알람멍🔔</h1>
+  <h1>🔔 코인 알람멍 🔔</h1>
 
-  <label>거래소 선택</label>
+  <label for="exchange">거래소 선택</label>
   <select id="exchange">
     <option value="upbit">업비트</option>
     <option value="binance">바이낸스</option>
     <option value="bitget">비트겟</option>
   </select>
 
-  <label>코인 선택</label>
+  <label for="coin">코인 선택</label>
   <select id="coin">
     <option value="BTC">비트코인 (BTC)</option>
     <option value="ETH">이더리움 (ETH)</option>
@@ -31,72 +31,50 @@
 
   <div id="price">현재가: -</div>
 
-  <label>갱신 간격 (초)</label>
-  <input type="number" id="interval" value="10" min="5"/>
-
-  <button onclick="resetTimer()">갱신 시작</button>
-
   <script>
-    const EXCHANGE = document.getElementById('exchange');
-    const COIN     = document.getElementById('coin');
-    const PRICE    = document.getElementById('price');
-    const INTVL    = document.getElementById('interval');
+    const exchangeEl = document.getElementById('exchange');
+    const coinEl     = document.getElementById('coin');
+    const priceEl    = document.getElementById('price');
 
-    let timer = null;
-    const CORS = 'https://api.allorigins.win/raw?url=';
+    exchangeEl.addEventListener('change', fetchPrice);
+    coinEl.addEventListener('change', fetchPrice);
 
     async function fetchPrice() {
-      const ex   = EXCHANGE.value;
-      const coin = COIN.value;
-      let url, res, json, p;
+      const ex   = exchangeEl.value;
+      const coin = coinEl.value;
+      let url, res, data, priceText;
+
+      priceEl.innerText = '현재가: 조회 중…';
 
       try {
         if (ex === 'upbit') {
-          url = CORS + encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${coin}`);
-          res = await fetch(url);
-          if (!res.ok) throw new Error(res.status);
-          json = await res.json();
-          p    = json[0].trade_price;
-          PRICE.innerText = `현재가: ${p.toLocaleString()} KRW`;
+          url  = `https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
+          res  = await fetch(url);
+          data = await res.json();
+          priceText = `${data[0].trade_price.toLocaleString()} KRW`;
 
         } else if (ex === 'binance') {
-          url = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
-          res = await fetch(url);
-          if (!res.ok) throw new Error(res.status);
-          json = await res.json();
-          p    = parseFloat(json.price);
-          PRICE.innerText = `현재가: ${p.toLocaleString()} USDT`;
+          url  = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
+          res  = await fetch(url);
+          data = await res.json();
+          priceText = `${parseFloat(data.price).toLocaleString()} USDT`;
 
         } else if (ex === 'bitget') {
-          url = CORS + encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`);
-          res = await fetch(url);
-          if (!res.ok) throw new Error(res.status);
-          json = await res.json();
-          p    = parseFloat(json.data.price);
-          PRICE.innerText = `현재가: ${p.toLocaleString()} USDT`;
+          url  = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
+          res  = await fetch(url);
+          data = await res.json();
+          priceText = `${parseFloat(data.data.price).toLocaleString()} USDT`;
+        }
 
-        }
-      } catch (err) {
-        if (err.message == '429') {
-          PRICE.innerText = '현재가: (429 Too Many Requests)';
-        } else {
-          PRICE.innerText = '현재가: (불러오기 실패)';
-        }
-        console.error(err);
+        priceEl.innerText = `현재가: ${priceText}`;
+      } catch (e) {
+        console.error(e);
+        priceEl.innerText = '현재가: (불러오기 실패)';
       }
     }
 
-    function resetTimer() {
-      if (timer) clearInterval(timer);
-      fetchPrice();
-      const sec = Math.max(5, parseInt(INTVL.value, 10));
-      timer = setInterval(fetchPrice, sec * 1000);
-    }
-
-    window.addEventListener('load', resetTimer);
-    EXCHANGE .addEventListener('change', resetTimer);
-    COIN     .addEventListener('change', resetTimer);
-    INTVL    .addEventListener('change', resetTimer);
+    // 페이지 열자마자 한 번
+    window.addEventListener('load', fetchPrice);
   </script>
 
 </body>
