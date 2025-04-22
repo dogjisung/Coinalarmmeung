@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,33 +20,36 @@
 </head>
 <body>
   <div class="container">
-    <h2>알림 등록</h2><label for="exchange">거래소</label>
-<select id="exchange" onchange="updateCoinList()">
-  <option value="binance">바이낸스 (Binance)</option>
-  <option value="upbit">업비트 (Upbit)</option>
-  <option value="bybit">바이비트 (Bybit)</option>
-  <option value="bitget">비트겟 (Bitget)</option>
-</select>
+    <h2>알림 등록</h2>
 
-<label for="coin">코인</label>
-<select id="coin" onchange="onCoinSelected()">
-  <option disabled selected>코인 선택</option>
-</select>
+    <label for="exchange">거래소</label>
+    <select id="exchange" onchange="updateCoinList()">
+      <option value="binance">바이낸스 (Binance)</option>
+      <option value="upbit">업비트 (Upbit)</option>
+      <option value="bybit">바이비트 (Bybit)</option>
+      <option value="bitget">비트겟 (Bitget)</option>
+    </select>
 
-<div class="price" id="price">현재가 : -</div>
+    <label for="coin">코인</label>
+    <select id="coin" onchange="onCoinSelected()">
+      <option disabled selected>코인 선택</option>
+    </select>
 
-<label for="target">설정가</label>
-<input type="number" id="target" placeholder="예: 85000" />
+    <div class="price" id="price">현재가 : -</div>
 
-<label for="condition">알림 조건</label>
-<select id="condition">
-  <option value="above">설정가 이상 도달 시</option>
-  <option value="below">설정가 이하 도달 시</option>
-</select>
+    <label for="target">설정가</label>
+    <input type="number" id="target" placeholder="예: 85000" />
 
-<button onclick="registerAlert()">알림 등록</button>
+    <label for="condition">알림 조건</label>
+    <select id="condition">
+      <option value="above">설정가 이상 도달 시</option>
+      <option value="below">설정가 이하 도달 시</option>
+    </select>
 
-  </div>  <script>
+    <button onclick="registerAlert()">알림 등록</button>
+  </div>
+
+  <script>
     const coinOptions = {
       binance: ['BTC/USDT', 'ETH/USDT', 'XRP/USDT'],
       upbit: ['BTC/KRW', 'ETH/KRW', 'XRP/KRW'],
@@ -76,9 +80,9 @@
         url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
       } else if (exchange === 'upbit') {
         const symbol = 'KRW-' + coin.split('/')[0];
-        url = `https://api.upbit.com/v1/ticker?markets=${symbol}`;
+        url = `https://coin-proxy.jane785714.workers.dev/?url=https://api.upbit.com/v1/ticker?markets=${symbol}`;
       } else if (exchange === 'bitget') {
-        const symbol = coin.replace('/', '');
+        const symbol = coin.replace('/', '').toLowerCase();
         url = `https://coin-proxy.jane785714.workers.dev/?url=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
       } else if (exchange === 'bybit') {
         const symbol = coin.replace('/', '');
@@ -115,5 +119,6 @@
     }
 
     window.onload = updateCoinList;
-  </script></body>
+  </script>
+</body>
 </html>
