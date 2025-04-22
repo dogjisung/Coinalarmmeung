@@ -15,29 +15,22 @@
       margin-top: 20px; width: 100%; padding: 12px; background-color: #7a6ff0; color: white; border: none; border-radius: 5px; font-size: 16px;
     }
     .price { margin-top: 10px; color: #7a6ff0; font-weight: bold; text-align: center; }
-    .coin-list { margin-top: 10px; max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px; }
-    .coin-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-    .coin-item:hover { background: #eee; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>알림 등록</h2><label for="exchange">거래소</label>
-<select id="exchange">
-  <option>바이낸스 (Binance)</option>
-  <option>업비트 (Upbit)</option>
-  <option>바이비트 (Bybit)</option>
-  <option>비트겟 (Bitget)</option>
+<select id="exchange" onchange="updateCoinList()">
+  <option value="binance">바이낸스 (Binance)</option>
+  <option value="upbit">업비트 (Upbit)</option>
+  <option value="bybit">바이비트 (Bybit)</option>
+  <option value="bitget">비트겟 (Bitget)</option>
 </select>
 
-<label>코인</label>
-<div class="coin-list" id="coinList">
-  <div class="coin-item">BTC/USDT</div>
-  <div class="coin-item">ETH/USDT</div>
-  <div class="coin-item">XRP/USDT</div>
-  <div class="coin-item">SOL/USDT</div>
-  <div class="coin-item">DOGE/USDT</div>
-</div>
+<label for="coin">코인</label>
+<select id="coin" onchange="onCoinSelected()">
+  <option disabled selected>코인 선택</option>
+</select>
 
 <div class="price" id="price">현재가 : -</div>
 
@@ -53,22 +46,47 @@
 <button onclick="registerAlert()">알림 등록</button>
 
   </div>  <script>
-    let selectedCoin = "";
+    const coinOptions = {
+      binance: ['BTC/USDT', 'ETH/USDT', 'XRP/USDT'],
+      upbit: ['BTC/KRW', 'ETH/KRW', 'XRP/KRW'],
+      bybit: ['BTC/USDT', 'ETH/USDT'],
+      bitget: ['BTC/USDT', 'ETH/USDT', 'DOGE/USDT']
+    };
 
-    document.querySelectorAll('.coin-item').forEach(item => {
-      item.addEventListener('click', () => {
-        selectedCoin = item.textContent;
-        fetchPrice(selectedCoin);
+    function updateCoinList() {
+      const exchange = document.getElementById('exchange').value;
+      const coinSelect = document.getElementById('coin');
+      coinSelect.innerHTML = '<option disabled selected>코인 선택</option>';
+      coinOptions[exchange].forEach(coin => {
+        const option = document.createElement('option');
+        option.textContent = coin;
+        option.value = coin;
+        coinSelect.appendChild(option);
       });
-    });
+      document.getElementById('price').textContent = '현재가 : -';
+    }
 
-    async function fetchPrice(coin) {
-      const symbol = coin.replace('/', '').toUpperCase();
-      const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
+    async function onCoinSelected() {
+      const coin = document.getElementById('coin').value;
+      const exchange = document.getElementById('exchange').value;
+
+      let url = '';
+      if (exchange === 'binance') {
+        const symbol = coin.replace('/', '');
+        url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
+      } else if (exchange === 'upbit') {
+        const symbol = 'KRW-' + coin.split('/')[0];
+        url = `https://api.upbit.com/v1/ticker?markets=${symbol}`;
+      } else {
+        document.getElementById('price').textContent = '현재가 : 지원 안됨';
+        return;
+      }
+
       try {
         const res = await fetch(url);
         const data = await res.json();
-        document.getElementById('price').textContent = `현재가 : ${parseFloat(data.price).toLocaleString()} USDT`;
+        const price = exchange === 'upbit' ? data[0].trade_price : data.price;
+        document.getElementById('price').textContent = `현재가 : ${parseFloat(price).toLocaleString()} USDT`;
       } catch (e) {
         document.getElementById('price').textContent = '현재가 : 조회 실패';
       }
@@ -76,9 +94,12 @@
 
     function registerAlert() {
       const exchange = document.getElementById('exchange').value;
+      const coin = document.getElementById('coin').value;
       const target = parseFloat(document.getElementById('target').value);
       const condition = document.getElementById('condition').value;
-      alert(`알림이 등록되었습니다.\n[${exchange}] ${selectedCoin} - ${condition === 'above' ? '이상' : '이하'} ${target}`);
+      alert(`알림이 등록되었습니다.\n[${exchange}] ${coin} - ${condition === 'above' ? '이상' : '이하'} ${target}`);
     }
+
+    window.onload = updateCoinList;
   </script></body>
 </html>
