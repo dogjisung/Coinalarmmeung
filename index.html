@@ -59,11 +59,13 @@
       <label for="sound">알림 사운드</label>
       <select id="sound">
         <option value="bell">🔔 기본 벨소리</option>
+        <option value="beep">🔉 비프 소리</option>
+        <option value="chime">🎵 차임 소리</option>
       </select>
     </div>
     <button id="register">등록</button>
     <div id="alert-list"></div>
-  </div><audio id="bell" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+  </div>  <!-- 사운드 파일 --><audio id="bell" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio> <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio> <audio id="chime" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"></audio>
 
   <script>
     const exchangeSelect = document.getElementById('exchange');
@@ -71,7 +73,8 @@
     const priceDisplay = document.getElementById('price');
     const registerBtn = document.getElementById('register');
     const alertList = document.getElementById('alert-list');
-    const bellSound = document.getElementById('bell');
+    const soundSelect = document.getElementById('sound');
+    const sounds = { bell: 'bell', beep: 'beep', chime: 'chime' };
 
     let currentPrice = 0;
     let alerts = [];
@@ -88,8 +91,7 @@
         const opt = document.createElement('option');
         opt.value = sym;
         opt.textContent = {
-          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)',
-          XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
+          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)', XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
         }[sym];
         symbolSelect.appendChild(opt);
       });
@@ -106,16 +108,15 @@
         let price;
         if (exchange === 'binance') {
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
-          const data = await res.json();
-          price = parseFloat(data.price);
+          price = parseFloat((await res.json()).price);
         } else if (exchange === 'bitget') {
-          const apiUrl = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT&cb=${Date.now()}`;
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+          const apiUrl = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
+          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`;
           const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data.data.close);
         } else {
-          const apiUrl = `https://api.upbit.com/v1/ticker?markets=KRW-${symbol}&cb=${Date.now()}`;
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+          const apiUrl = `https://api.upbit.com/v1/ticker?markets=KRW-${symbol}`;
+          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`;
           const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data[0].trade_price);
         }
@@ -130,7 +131,7 @@
       alerts = alerts.filter(a => {
         if (a.exchange !== exchangeSelect.value || a.symbol !== symbolSelect.value) return true;
         const hit = a.condition === 'over' ? currentPrice >= a.target : currentPrice <= a.target;
-        if (hit) bellSound.play();
+        if (hit) document.getElementById(sounds[soundSelect.value]).play();
         return hit && a.repeat === 'repeat';
       });
       renderAlertList();
@@ -155,9 +156,7 @@
         condition: document.getElementById('condition').value,
         repeat: document.getElementById('repeat').value,
         interval: parseInt(document.getElementById('interval').value)
-      };
-      if (!a.target) return;
-      alerts.push(a); renderAlertList();
+      }; if (!a.target) return; alerts.push(a); renderAlertList();
     };
 
     exchangeSelect.onchange = () => { updateSymbolOptions(); fetchPrice(); };
