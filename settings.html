@@ -1,3 +1,5 @@
+<!-- settings.html -->
+<!-- fragment: 설정가·조건·반복·사운드·커스텀 파일 -->
 <label for="targetPrice">설정가</label>
 <input type="number" id="targetPrice" placeholder="예: 30000" />
 
@@ -17,16 +19,5 @@
   <option value="chime">🎵 차임 소리</option>
 </select>
 
-<div id="custom-sound">
-  <label for="customFile">커스텀 사운드 (.mp3)</label>
-  <input type="file" id="customFile" accept="audio/mp3"/>
-</div>
-
-<button onclick="registerAlert()">등록</button>
-
-<script>
-  function registerAlert() {
-    // TODO: 설정값 로컬저장 or 알림 로직 연결
-    alert('알림이 등록되었습니다!');
-  }
-</script>
+<label for="customFile">커스텀 사운드 (.mp3)</label>
+<input type="file" id="customFile" accept="audio/mp3" />
