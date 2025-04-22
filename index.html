@@ -8,13 +8,16 @@
     .container { max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     h2 { margin-top: 0; text-align: center; }
     label { display: block; margin-top: 15px; font-weight: bold; }
-    select, input[type="text"], input[type="number"] {
+    select, input[type="number"] {
       width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px;
     }
     button {
       margin-top: 20px; width: 100%; padding: 12px; background-color: #7a6ff0; color: white; border: none; border-radius: 5px; font-size: 16px;
     }
     .price { margin-top: 10px; color: #7a6ff0; font-weight: bold; text-align: center; }
+    .coin-list { margin-top: 10px; max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px; }
+    .coin-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+    .coin-item:hover { background: #eee; }
   </style>
 </head>
 <body>
@@ -27,8 +30,14 @@
   <option>비트겟 (Bitget)</option>
 </select>
 
-<label for="coin">코인</label>
-<input type="text" id="coin" placeholder="예: BTC/USDT" onblur="fetchPrice()" />
+<label>코인</label>
+<div class="coin-list" id="coinList">
+  <div class="coin-item">BTC/USDT</div>
+  <div class="coin-item">ETH/USDT</div>
+  <div class="coin-item">XRP/USDT</div>
+  <div class="coin-item">SOL/USDT</div>
+  <div class="coin-item">DOGE/USDT</div>
+</div>
 
 <div class="price" id="price">현재가 : -</div>
 
@@ -44,10 +53,18 @@
 <button onclick="registerAlert()">알림 등록</button>
 
   </div>  <script>
-    async function fetchPrice() {
-      const coin = document.getElementById('coin').value.replace('/', '').toUpperCase();
-      if (!coin) return;
-      const url = `https://coin-proxy.jane785714.workers.dev/?url=https://api.binance.com/api/v3/ticker/price?symbol=${coin}`;
+    let selectedCoin = "";
+
+    document.querySelectorAll('.coin-item').forEach(item => {
+      item.addEventListener('click', () => {
+        selectedCoin = item.textContent;
+        fetchPrice(selectedCoin);
+      });
+    });
+
+    async function fetchPrice(coin) {
+      const symbol = coin.replace('/', '').toUpperCase();
+      const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
       try {
         const res = await fetch(url);
         const data = await res.json();
@@ -59,10 +76,9 @@
 
     function registerAlert() {
       const exchange = document.getElementById('exchange').value;
-      const coin = document.getElementById('coin').value;
       const target = parseFloat(document.getElementById('target').value);
       const condition = document.getElementById('condition').value;
-      alert(`알림이 등록되었습니다.\n[${exchange}] ${coin} - ${condition === 'above' ? '이상' : '이하'} ${target}`);
+      alert(`알림이 등록되었습니다.\n[${exchange}] ${selectedCoin} - ${condition === 'above' ? '이상' : '이하'} ${target}`);
     }
   </script></body>
 </html>
