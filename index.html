@@ -98,7 +98,12 @@
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
           price = parseFloat((await res.json()).price);
         } else if (exchange === 'bitget') {
-          const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`)}&t=${Date.now()}`;
+          // AllOrigins get proxy for Bitget API
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`)}&t=${Date.now()}`;
+          const wrapper = await (await fetch(proxyUrl)).json();
+          const dataReal = JSON.parse(wrapper.contents);
+          price = parseFloat(dataReal.data.close);
+        }USDT`)}&t=${Date.now()}`;
           const data = await (await fetch(proxy)).json();
           price = parseFloat(data.data.close);
         } else {
