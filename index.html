@@ -2,121 +2,29 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>🔔코인 알람멍🔔</title>
-  <style>
-    body { font-family: sans-serif; padding: 1rem; max-width: 400px; margin: auto; }
-    label { display: block; margin-top: 1rem; font-weight: bold; }
-    select, input, button { width: 100%; padding: .5rem; margin-top: .25rem; box-sizing: border-box; }
-    #price { font-size: 1.25rem; margin-top: 1rem; }
-  </style>
 </head>
 <body>
-
-  <h1 style="text-align:center;">🔔코인 알람멍🔔</h1>
-
-  <label for="exchange">거래소 선택</label>
-  <select id="exchange">
-    <option value="upbit">업비트</option>
-    <option value="binance">바이낸스</option>
-    <option value="bitget">비트겟</option>
-  </select>
-
-  <label for="coin">코인 선택</label>
-  <select id="coin">
-    <option value="BTC">비트코인 (BTC)</option>
-    <option value="ETH">이더리움 (ETH)</option>
-    <option value="XRP">리플 (XRP)</option>
-  </select>
-
-  <div id="price">현재가: -</div>
-
-  <label for="targetPrice">설정가</label>
-  <input type="number" id="targetPrice" placeholder="예: 30000" />
-
-  <label for="condition">알림 조건</label>
-  <select id="condition">
-    <option value="above">설정가 이상 도달 시</option>
-    <option value="below">설정가 이하 도달 시</option>
-  </select>
-
-  <label for="interval">반복 간격 (초)</label>
-  <input type="number" id="interval" value="2" min="1"/>
-
-  <label for="sound">알림 사운드</label>
-  <select id="sound">
-    <option value="default">🔔 기본 벨소리</option>
-    <option value="beep">🔊 비프 소리</option>
-    <option value="chime">🎵 차임 소리</option>
-  </select>
-
-  <div id="custom-sound">
-    <label for="customFile">커스텀 사운드 (.mp3)</label>
-    <input type="file" id="customFile" accept="audio/mp3" />
-  </div>
-
-  <button onclick="registerAlert()">등록</button>
+  <div id="part-exchange"></div>
+  <div id="part-live-price"></div>
+  <div id="part-settings"></div>
 
   <script>
-    const exEl       = document.getElementById('exchange');
-    const coinEl     = document.getElementById('coin');
-    const priceEl    = document.getElementById('price');
-    const intervalEl = document.getElementById('interval');
-    let fetchTimer;
-
-    // allorigins 프록시
-    const proxy = url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-
-    async function fetchPrice() {
-      const ex   = exEl.value;
-      const coin = coinEl.value;
-      let url, res, data, price;
-
-      try {
-        if (ex === 'upbit') {
-          url  = proxy(`https://api.upbit.com/v1/ticker?markets=KRW-${coin}`);
-          res  = await fetch(url);
-          data = await res.json();
-          price = data[0].trade_price;
-          priceEl.innerText = `현재가: ${price.toLocaleString()} KRW`;
-
-        } else if (ex === 'binance') {
-          url  = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
-          res  = await fetch(url);
-          data = await res.json();
-          price = parseFloat(data.price);
-          priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
-
-        } else if (ex === 'bitget') {
-          url  = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
-          res  = await fetch(proxy(url));
-          data = await res.json();
-          // bitget 리스폰스: { code: ..., data: { symbol, last, ... } }
-          price = parseFloat(data.data.last);
-          priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
-
-        }
-      } catch (e) {
-        console.error(e);
-        priceEl.innerText = '현재가: (불러오기 실패)';
+    async function loadFragment(targetId, url) {
+      const res = await fetch(url);
+      if (!res.ok) {
+        document.getElementById(targetId).innerText = url + ' 로딩 실패';
+        return;
       }
+      document.getElementById(targetId).innerHTML = await res.text();
     }
 
-    function resetTimer() {
-      clearInterval(fetchTimer);
-      fetchPrice();
-      const sec = Math.max(1, parseInt(intervalEl.value,10));
-      fetchTimer = setInterval(fetchPrice, sec*1000);
-    }
-
-    exEl.addEventListener('change', resetTimer);
-    coinEl.addEventListener('change', resetTimer);
-    intervalEl.addEventListener('change', resetTimer);
-    window.addEventListener('load', resetTimer);
-
-    function registerAlert() {
-      alert('알림이 등록되었습니다!');
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFragment('part-exchange',  'exchange.html');
+      loadFragment('part-live-price','live-price.html');
+      loadFragment('part-settings',  'settings.html');
+    });
   </script>
 </body>
 </html>
