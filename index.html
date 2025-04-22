@@ -31,64 +31,72 @@
 
   <div id="price">현재가: -</div>
 
-  <label>반복 간격 (초)</label>
-  <input type="number" id="interval" value="2" min="1"/>
+  <label>갱신 간격 (초)</label>
+  <input type="number" id="interval" value="10" min="5"/>
 
-  <button onclick="resetTimer()">새로고침 시작</button>
+  <button onclick="resetTimer()">갱신 시작</button>
 
   <script>
-    const exchangeEl = document.getElementById('exchange');
-    const coinEl     = document.getElementById('coin');
-    const priceEl    = document.getElementById('price');
-    const intervalEl = document.getElementById('interval');
+    const EXCHANGE = document.getElementById('exchange');
+    const COIN     = document.getElementById('coin');
+    const PRICE    = document.getElementById('price');
+    const INTVL    = document.getElementById('interval');
 
-    let timer;
+    let timer = null;
+    const CORS = 'https://api.allorigins.win/raw?url=';
 
     async function fetchPrice() {
-      const ex   = exchangeEl.value;
-      const coin = coinEl.value;
-      let url, res, data, price;
+      const ex   = EXCHANGE.value;
+      const coin = COIN.value;
+      let url, res, json, p;
 
       try {
         if (ex === 'upbit') {
-          // 퍼블릭 CORS 프록시 사용
-          url = `https://cors-anywhere.herokuapp.com/https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
+          url = CORS + encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${coin}`);
           res = await fetch(url);
-          data = await res.json();
-          price = data[0].trade_price;
-          priceEl.innerText = `현재가: ${price.toLocaleString()} KRW`;
+          if (!res.ok) throw new Error(res.status);
+          json = await res.json();
+          p    = json[0].trade_price;
+          PRICE.innerText = `현재가: ${p.toLocaleString()} KRW`;
 
         } else if (ex === 'binance') {
           url = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
           res = await fetch(url);
-          data = await res.json();
-          price = parseFloat(data.price);
-          priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
+          if (!res.ok) throw new Error(res.status);
+          json = await res.json();
+          p    = parseFloat(json.price);
+          PRICE.innerText = `현재가: ${p.toLocaleString()} USDT`;
 
         } else if (ex === 'bitget') {
-          // bitget도 CORS 제한이 있을 수 있으니 프록시 사용
-          url = `https://cors-anywhere.herokuapp.com/https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
+          url = CORS + encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`);
           res = await fetch(url);
-          data = await res.json();
-          price = parseFloat(data.data.price);
-          priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
-        }
+          if (!res.ok) throw new Error(res.status);
+          json = await res.json();
+          p    = parseFloat(json.data.price);
+          PRICE.innerText = `현재가: ${p.toLocaleString()} USDT`;
 
+        }
       } catch (err) {
+        if (err.message == '429') {
+          PRICE.innerText = '현재가: (429 Too Many Requests)';
+        } else {
+          PRICE.innerText = '현재가: (불러오기 실패)';
+        }
         console.error(err);
-        priceEl.innerText = '현재가: (불러오기 실패)';
       }
     }
 
     function resetTimer() {
       if (timer) clearInterval(timer);
       fetchPrice();
-      const sec = Math.max(1, parseInt(intervalEl.value, 10));
+      const sec = Math.max(5, parseInt(INTVL.value, 10));
       timer = setInterval(fetchPrice, sec * 1000);
     }
 
-    // 초기 시작
     window.addEventListener('load', resetTimer);
+    EXCHANGE .addEventListener('change', resetTimer);
+    COIN     .addEventListener('change', resetTimer);
+    INTVL    .addEventListener('change', resetTimer);
   </script>
 
 </body>
