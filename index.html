@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,59 +25,62 @@
       <option value="upbit">업비트</option>
       <option value="binance">바이낸스</option>
       <option value="bitget">비트겟</option>
-    </select><label for="coin">코인 선택</label>
-<select id="coin">
-  <option value="BTC">비트코인 (BTC)</option>
-  <option value="ETH">이더리움 (ETH)</option>
-  <option value="SOL">솔라나 (SOL)</option>
-  <option value="XRP">리플 (XRP)</option>
-  <option value="ADA">에이다 (ADA)</option>
-  <option value="DOGE">도지 (DOGE)</option>
-  <option value="AVAX">아발란체 (AVAX)</option>
-</select>
+    </select>
 
-<div id="price">현재가: -</div>
+    <label for="coin">코인 선택</label>
+    <select id="coin">
+      <option value="BTC">비트코인 (BTC)</option>
+      <option value="ETH">이더리움 (ETH)</option>
+      <option value="SOL">솔라나 (SOL)</option>
+      <option value="XRP">리플 (XRP)</option>
+      <option value="ADA">에이다 (ADA)</option>
+      <option value="DOGE">도지 (DOGE)</option>
+      <option value="AVAX">아발란체 (AVAX)</option>
+    </select>
 
-<label for="threshold">설정가</label>
-<input id="threshold" type="number" placeholder="예: 30000">
+    <div id="price">현재가: -</div>
 
-<label for="condition">알림 조건</label>
-<select id="condition">
-  <option value="above">설정가 이상 도달 시</option>
-  <option value="below">설정가 이하 도달 시</option>
-</select>
+    <label for="threshold">설정가</label>
+    <input id="threshold" type="number" placeholder="예: 30000">
 
-<label for="interval">반복 간격 (초)</label>
-<input id="interval" type="number" value="2">
+    <label for="condition">알림 조건</label>
+    <select id="condition">
+      <option value="above">설정가 이상 도달 시</option>
+      <option value="below">설정가 이하 도달 시</option>
+    </select>
 
-<label for="sound">알림 사운드</label>
-<select id="sound">
-  <option value="default">🔔 기본 벨소리</option>
-  <option value="beep">🔉 비프 소리</option>
-  <option value="chime">🎵 차임 소리</option>
-  <option value="custom">➕ 커스텀 (.mp3)</option>
-</select>
-<input id="customFile" type="file" accept="audio/mp3" style="display:none; margin-top:8px;">
+    <label for="interval">반복 간격 (초)</label>
+    <input id="interval" type="number" value="2">
 
-<button id="register">등록</button>
+    <label for="sound">알림 사운드</label>
+    <select id="sound">
+      <option value="default">🔔 기본 벨소리</option>
+      <option value="beep">🔉 비프 소리</option>
+      <option value="chime">🎵 차임 소리</option>
+      <option value="custom">➕ 커스텀 (.mp3)</option>
+    </select>
+    <input id="customFile" type="file" accept="audio/mp3" style="display:none; margin-top:8px;">
 
-<div class="alarms" id="alarmsList"></div>
+    <button id="register">등록</button>
 
-  </div><script>
+    <div class="alarms" id="alarmsList"></div>
+  </div>
+
+<script>
 const exchangeSel = document.getElementById('exchange');
-const coinSel = document.getElementById('coin');
-const priceDiv = document.getElementById('price');
-const thresholdInput = document.getElementById('threshold');
-const conditionSel = document.getElementById('condition');
-const intervalInput = document.getElementById('interval');
-const soundSel = document.getElementById('sound');
-const customFile = document.getElementById('customFile');
+const coinSel     = document.getElementById('coin');
+const priceDiv    = document.getElementById('price');
+const threshold   = document.getElementById('threshold');
+const condition   = document.getElementById('condition');
+const intervalIn  = document.getElementById('interval');
+const soundSel    = document.getElementById('sound');
+const customFile  = document.getElementById('customFile');
 const registerBtn = document.getElementById('register');
-const alarmsList = document.getElementById('alarmsList');
+const alarmsList  = document.getElementById('alarmsList');
 let alarms = [];
 
 soundSel.addEventListener('change', ()=>{
-  customFile.style.display = soundSel.value==='custom'?'block':'none';
+  customFile.style.display = soundSel.value==='custom' ? 'block' : 'none';
 });
 
 async function fetchPrice() {
@@ -84,18 +88,18 @@ async function fetchPrice() {
   const sym = coinSel.value;
   try {
     let res, data, p;
-    if(ex==='upbit'){
-      res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${sym}`)}`);
+    if (ex==='upbit') {
+      res = await fetch(`https://api.upbit.com/v1/ticker?markets=KRW-${sym}`);
       data = await res.json(); p = data[0].trade_price;
       priceDiv.textContent = `현재가: ${p.toLocaleString()} KRW`;
     }
-    if(ex==='binance'){
-      res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.binance.com/api/v3/ticker/price?symbol=${sym}USDT`)}`);
+    if (ex==='binance') {
+      res = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://api.binance.com/api/v3/ticker/price?symbol=${sym}USDT`);
       data = await res.json(); p = parseFloat(data.price);
       priceDiv.textContent = `현재가: ${p.toLocaleString(undefined,{minimumFractionDigits:2})} USDT`;
     }
-    if(ex==='bitget'){
-      res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${sym}USDT`)}`);
+    if (ex==='bitget') {
+      res = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${sym}USDT`);
       data = await res.json(); p = parseFloat(data.data.last);
       priceDiv.textContent = `현재가: ${p.toLocaleString(undefined,{minimumFractionDigits:2})} USDT`;
     }
@@ -106,10 +110,10 @@ async function fetchPrice() {
 }
 
 function checkAlarms(p) {
-  alarms.forEach((a,i)=>{
-    if(a.triggered) return;
-    if(a.condition==='above'&&p>=a.threshold || a.condition==='below'&&p<=a.threshold) {
-      a.triggered=true;
+  alarms.forEach(a=>{
+    if (a.triggered) return;
+    if ((a.condition==='above' && p>=a.threshold) || (a.condition==='below' && p<=a.threshold)) {
+      a.triggered = true;
       playSound(a);
       alert(`${a.coin} ${a.condition==='above'?'이상':'이하'} ${a.threshold} 도달!`);
     }
@@ -117,44 +121,47 @@ function checkAlarms(p) {
 }
 
 function playSound(a){
-  if(a.sound==='default') new Audio('bell.mp3').play();
-  else if(a.sound==='beep') new Audio('beep.mp3').play();
-  else if(a.sound==='chime') new Audio('chime.mp3').play();
-  else if(a.sound==='custom'&&a.file) new Audio(URL.createObjectURL(a.file)).play();
+  if (a.sound==='default') new Audio('bell.mp3').play();
+  else if (a.sound==='beep')    new Audio('beep.mp3').play();
+  else if (a.sound==='chime')   new Audio('chime.mp3').play();
+  else if (a.sound==='custom'&&a.file) new Audio(URL.createObjectURL(a.file)).play();
 }
 
 registerBtn.addEventListener('click',()=>{
   const alarm = {
-    exchange:exchangeSel.value,
-    coin:coinSel.value,
-    threshold:parseFloat(thresholdInput.value),
-    condition:conditionSel.value,
-    intervalSec:parseInt(intervalInput.value,10),
-    sound:soundSel.value,
-    file: customFile.files[0]||null,
-    triggered:false
+    exchange: exchangeSel.value,
+    coin:      coinSel.value,
+    threshold: parseFloat(threshold.value),
+    condition: condition.value,
+    intervalSec: parseInt(intervalIn.value,10),
+    sound:     soundSel.value,
+    file:      customFile.files[0]||null,
+    triggered: false
   };
   alarms.push(alarm);
   renderAlarms();
 });
 
 function renderAlarms(){
-  alarmsList.innerHTML='';
+  alarmsList.innerHTML = '';
   alarms.forEach((a,i)=>{
-    const div=document.createElement('div'); div.className='alarm-item';
-    div.innerHTML = `<span>${a.coin} ${a.condition==='above'?'≥':'≤'} ${a.threshold}</span><button data-i="${i}">삭제</button>`;
-    alarmsList.append(div);
-  });
-  alarmsList.querySelectorAll('button').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      alarms.splice(btn.dataset.i,1);
+    const div = document.createElement('div');
+    div.className = 'alarm-item';
+    div.innerHTML = `
+      <span>${a.coin} ${a.condition==='above'?'▲':'▼'} ${a.threshold}</span>
+      <button data-i="${i}">삭제</button>`;
+    div.querySelector('button').addEventListener('click',e=>{
+      const idx = e.target.dataset.i;
+      alarms.splice(idx,1);
       renderAlarms();
     });
+    alarmsList.appendChild(div);
   });
 }
 
-// 초기 자동 갱신
-fetchPrice();
-setInterval(fetchPrice,2000);
-</script></body>
+// 2초마다 가격 자동 갱신
+setInterval(fetchPrice, 2000);
+window.addEventListener('load', fetchPrice);
+</script>
+</body>
 </html>
