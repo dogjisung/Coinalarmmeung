@@ -35,6 +35,7 @@
   <div id="price">현재가: -</div>
 
   <script>
+    const proxy = "https://coin-proxy.687514.workers.dev";
     const exchangeEl = document.getElementById('exchange');
     const coinEl     = document.getElementById('coin');
     const btn        = document.getElementById('btnFetch');
@@ -50,20 +51,20 @@
       try {
         let url, res, data, priceText;
         if (ex === 'upbit') {
-          url  = `https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
-          res  = await fetch(url);
+          url = `${proxy}/?url=https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
+          res = await fetch(url);
           data = await res.json();
           priceText = data[0].trade_price.toLocaleString() + ' KRW';
 
         } else if (ex === 'binance') {
-          url  = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
-          res  = await fetch(url);
+          url = `${proxy}/?url=https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
+          res = await fetch(url);
           data = await res.json();
           priceText = parseFloat(data.price).toLocaleString() + ' USDT';
 
         } else if (ex === 'bitget') {
-          url  = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
-          res  = await fetch(url);
+          url = `${proxy}/?url=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
+          res = await fetch(url);
           data = await res.json();
           priceText = parseFloat(data.data.price).toLocaleString() + ' USDT';
         }
