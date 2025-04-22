@@ -1,0 +1,51 @@
+<div id="price">현재가: -</div>
+
+<script>
+  async function fetchPrice() {
+    const ex   = document.getElementById('exchange').value;
+    const coin = document.getElementById('coin').value;
+    let url, res, json, price;
+
+    try {
+      if (ex === 'upbit') {
+        url  = `https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
+        res  = await fetch(url);
+        json = await res.json();
+        price = json[0].trade_price;
+        document.getElementById('price').innerText = `현재가: ${price.toLocaleString()} KRW`;
+
+      } else if (ex === 'binance') {
+        url  = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
+        res  = await fetch(url);
+        json = await res.json();
+        price = parseFloat(json.price);
+        document.getElementById('price').innerText = `현재가: ${price.toLocaleString()} USDT`;
+
+      } else /* bitget */ {
+        url  = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
+        res  = await fetch(url);
+        json = await res.json();
+        price = parseFloat(json.data.price);
+        document.getElementById('price').innerText = `현재가: ${price.toLocaleString()} USDT`;
+      }
+
+    } catch (e) {
+      console.error('price fetch error:', e);
+      document.getElementById('price').innerText = '현재가: (불러오기 실패)';
+    }
+  }
+
+  // 선택 변경 시 바로 한 번, 이후 2초마다 갱신
+  document.getElementById('exchange').addEventListener('change', () => {
+    fetchPrice();
+  });
+  document.getElementById('coin').addEventListener('change', () => {
+    fetchPrice();
+  });
+
+  // 2초마다 반복
+  setInterval(fetchPrice, 2000);
+
+  // 초기 한 번
+  fetchPrice();
+</script>

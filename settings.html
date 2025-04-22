@@ -1,0 +1,32 @@
+<label for="targetPrice">설정가</label>
+<input type="number" id="targetPrice" placeholder="예: 30000" />
+
+<label for="condition">알림 조건</label>
+<select id="condition">
+  <option value="above">설정가 이상 도달 시</option>
+  <option value="below">설정가 이하 도달 시</option>
+</select>
+
+<label for="interval">반복 간격 (초)</label>
+<input type="number" id="interval" value="2" min="1"/>
+
+<label for="sound">알림 사운드</label>
+<select id="sound">
+  <option value="default">🔔 기본 벨소리</option>
+  <option value="beep">🔊 비프 소리</option>
+  <option value="chime">🎵 차임 소리</option>
+</select>
+
+<div id="custom-sound">
+  <label for="customFile">커스텀 사운드 (.mp3)</label>
+  <input type="file" id="customFile" accept="audio/mp3"/>
+</div>
+
+<button onclick="registerAlert()">등록</button>
+
+<script>
+  function registerAlert() {
+    // TODO: 설정값 로컬저장 or 알림 로직 연결
+    alert('알림이 등록되었습니다!');
+  }
+</script>
