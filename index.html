@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🔔 코인 알람멍 🔔</title>
+  <title>🔔코인 알람멍 (한번 조회)</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; max-width: 400px; margin: auto; }
+    h1 { text-align: center; }
     label { display: block; margin-top: 1rem; }
-    select, button { width: 100%; padding: .5rem; margin-top: .25rem; }
-    #price { font-size: 1.25rem; margin-top: 1rem; }
+    select, button { width: 100%; padding: .5rem; margin-top: .25rem; font-size: 1rem; }
+    #price { font-size: 1.25rem; margin-top: 1.5rem; text-align: center; }
   </style>
 </head>
 <body>
 
-  <h1>🔔 코인 알람멍 🔔</h1>
+  <h1>🔔코인 알람멍🔔</h1>
 
   <label for="exchange">거래소 선택</label>
   <select id="exchange">
@@ -29,52 +30,50 @@
     <option value="XRP">리플 (XRP)</option>
   </select>
 
+  <button id="btnFetch">현재가 조회</button>
+
   <div id="price">현재가: -</div>
 
   <script>
     const exchangeEl = document.getElementById('exchange');
     const coinEl     = document.getElementById('coin');
+    const btn        = document.getElementById('btnFetch');
     const priceEl    = document.getElementById('price');
 
-    exchangeEl.addEventListener('change', fetchPrice);
-    coinEl.addEventListener('change', fetchPrice);
+    btn.addEventListener('click', fetchPrice);
 
-    async function fetchPrice() {
+    async function fetchPrice(){
       const ex   = exchangeEl.value;
       const coin = coinEl.value;
-      let url, res, data, priceText;
-
       priceEl.innerText = '현재가: 조회 중…';
 
       try {
+        let url, res, data, priceText;
         if (ex === 'upbit') {
           url  = `https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
           res  = await fetch(url);
           data = await res.json();
-          priceText = `${data[0].trade_price.toLocaleString()} KRW`;
+          priceText = data[0].trade_price.toLocaleString() + ' KRW';
 
         } else if (ex === 'binance') {
           url  = `https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
           res  = await fetch(url);
           data = await res.json();
-          priceText = `${parseFloat(data.price).toLocaleString()} USDT`;
+          priceText = parseFloat(data.price).toLocaleString() + ' USDT';
 
         } else if (ex === 'bitget') {
           url  = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
           res  = await fetch(url);
           data = await res.json();
-          priceText = `${parseFloat(data.data.price).toLocaleString()} USDT`;
+          priceText = parseFloat(data.data.price).toLocaleString() + ' USDT';
         }
 
         priceEl.innerText = `현재가: ${priceText}`;
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
         priceEl.innerText = '현재가: (불러오기 실패)';
       }
     }
-
-    // 페이지 열자마자 한 번
-    window.addEventListener('load', fetchPrice);
   </script>
 
 </body>
