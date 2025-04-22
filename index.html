@@ -76,7 +76,6 @@
     let currentPrice = 0;
     let alerts = [];
 
-    // 거래소별 심볼 목록 정의
     const symbols = {
       binance: ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX'],
       bitget: ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX'],
@@ -84,20 +83,12 @@
     };
 
     function updateSymbolOptions() {
-      // 심볼 select 초기화
       symbolSelect.innerHTML = '';
-      const list = symbols[exchangeSelect.value];
-      list.forEach(sym => {
+      symbols[exchangeSelect.value].forEach(sym => {
         const opt = document.createElement('option');
         opt.value = sym;
         opt.textContent = {
-          BTC:'비트코인 (BTC)',
-          ETH:'이더리움 (ETH)',
-          SOL:'솔라나 (SOL)',
-          XRP:'리플 (XRP)',
-          ADA:'에이다 (ADA)',
-          DOGE:'도지코인 (DOGE)',
-          AVAX:'아발란체 (AVAX)'
+          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)', XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
         }[sym];
         symbolSelect.appendChild(opt);
       });
@@ -116,15 +107,12 @@
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
           price = parseFloat((await res.json()).price);
         } else if (exchange === 'bitget') {
-          // corsproxy.io 우회
-          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`)}`;
-          const res = await fetch(proxyUrl);
-          const data = await res.json();
+          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`);
+          const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data.data.close);
-        } else { // upbit
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${symbol}`)}&t=${Date.now()}`;
-          const wrapper = await (await fetch(proxyUrl)).json();
-          const data = JSON.parse(wrapper.contents);
+        } else {
+          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://api.upbit.com/v1/ticker?markets=KRW-${symbol}`);
+          const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data[0].trade_price);
         }
         currentPrice = price;
@@ -147,8 +135,9 @@
     function renderAlertList() {
       alertList.innerHTML = '';
       alerts.forEach((a,i) => {
-        const div = document.createElement('div'); div.className='alert-item';
-        div.innerHTML = `<span>${a.symbol} - ${formatPrice(a.target)} ${a.condition==='over'?'이상':'이하'}</span><button class='delete-btn' onclick='deleteAlert(${i})'>삭제</button>`;
+        const div = document.createElement('div');
+        div.className = 'alert-item';
+        div.innerHTML = `<span>${a.symbol} - ${formatPrice(a.target)} ${a.condition === 'over' ? '이상' : '이하'}</span><button class='delete-btn' onclick='deleteAlert(${i})'>삭제</button>`;
         alertList.appendChild(div);
       });
     }
@@ -163,20 +152,13 @@
         condition: document.getElementById('condition').value,
         repeat: document.getElementById('repeat').value,
         interval: parseInt(document.getElementById('interval').value)
-      };
-      if (!a.target) return;
-      alerts.push(a);
-      renderAlertList();
+      }; if (!a.target) return; alerts.push(a); renderAlertList();
     };
 
     exchangeSelect.onchange = () => { updateSymbolOptions(); fetchPrice(); };
     symbolSelect.onchange = fetchPrice;
 
-    // 초기화
-    updateSymbolOptions();
-    fetchPrice();
-
-    // 2초마다 가격 갱신 및 알림 체크
+    updateSymbolOptions(); fetchPrice();
     setInterval(() => { fetchPrice(); checkAlerts(); }, 2000);
   </script></body>
 </html>
