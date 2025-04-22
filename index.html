@@ -4,8 +4,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🔔코인 알람멍🔔</title>
   <style>
-    body { font-family: sans-serif; background: #f8f8f8; padding: 20px; text-align: center; }
-    .container { margin: auto; max-width: 420px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; text-align: center; }
+    .container { margin: auto; max-width: 480px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     h1 { color: #7c4dff; margin-bottom: 20px; }
     .row { margin-bottom: 15px; text-align: left; }
     label { font-weight: bold; display: block; margin-bottom: 5px; }
@@ -63,6 +63,10 @@
         <option value="chime">🎵 차임 소리</option>
       </select>
     </div>
+    <div class="row">
+      <label for="customSound">커스텀 사운드 (.mp3)</label>
+      <input id="customSound" type="file" accept="audio/*">
+    </div>
     <button id="register">등록</button>
     <div id="alert-list"></div>
   </div>  <!-- 사운드 파일 --><audio id="bell" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio> <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio> <audio id="chime" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"></audio>
@@ -74,10 +78,11 @@
     const registerBtn = document.getElementById('register');
     const alertList = document.getElementById('alert-list');
     const soundSelect = document.getElementById('sound');
-    const sounds = { bell: 'bell', beep: 'beep', chime: 'chime' };
+    const customInput = document.getElementById('customSound');
 
     let currentPrice = 0;
     let alerts = [];
+    let customAudio = null;
 
     const symbols = {
       binance: ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX'],
@@ -85,13 +90,21 @@
       upbit:   ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX']
     };
 
+    // 커스텀 오디오 파일
+    customInput.addEventListener('change', e => {
+      if (e.target.files[0]) {
+        customAudio = new Audio(URL.createObjectURL(e.target.files[0]));
+      }
+    });
+
     function updateSymbolOptions() {
       symbolSelect.innerHTML = '';
       symbols[exchangeSelect.value].forEach(sym => {
         const opt = document.createElement('option');
         opt.value = sym;
         opt.textContent = {
-          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)', XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
+          BTC:'비트코인 (BTC)', ETH:'이더리움 (ETH)', SOL:'솔라나 (SOL)',
+          XRP:'리플 (XRP)', ADA:'에이다 (ADA)', DOGE:'도지코인 (DOGE)', AVAX:'아발란체 (AVAX)'
         }[sym];
         symbolSelect.appendChild(opt);
       });
@@ -111,12 +124,13 @@
           price = parseFloat((await res.json()).price);
         } else if (exchange === 'bitget') {
           const apiUrl = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
-          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}&cacheBust=${Date.now()}`;
           const data = await (await fetch(proxyUrl)).json();
-          price = parseFloat(data.data.close);
+          if (data && data.data) price = parseFloat(data.data.close);
+          else throw new Error('Bitget 데이터 없음');
         } else {
           const apiUrl = `https://api.upbit.com/v1/ticker?markets=KRW-${symbol}`;
-          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}&cacheBust=${Date.now()}`;
           const data = await (await fetch(proxyUrl)).json();
           price = parseFloat(data[0].trade_price);
         }
@@ -127,11 +141,20 @@
       }
     }
 
+    function playAlertSound() {
+      if (customAudio) {
+        customAudio.play();
+      } else {
+        const id = soundSelect.value;
+        document.getElementById(id).play();
+      }
+    }
+
     function checkAlerts() {
       alerts = alerts.filter(a => {
         if (a.exchange !== exchangeSelect.value || a.symbol !== symbolSelect.value) return true;
         const hit = a.condition === 'over' ? currentPrice >= a.target : currentPrice <= a.target;
-        if (hit) document.getElementById(sounds[soundSelect.value]).play();
+        if (hit) playAlertSound();
         return hit && a.repeat === 'repeat';
       });
       renderAlertList();
@@ -156,7 +179,10 @@
         condition: document.getElementById('condition').value,
         repeat: document.getElementById('repeat').value,
         interval: parseInt(document.getElementById('interval').value)
-      }; if (!a.target) return; alerts.push(a); renderAlertList();
+      };
+      if (!a.target) return;
+      alerts.push(a);
+      renderAlertList();
     };
 
     exchangeSelect.onchange = () => { updateSymbolOptions(); fetchPrice(); };
