@@ -1,179 +1,20 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>🔔코인 알람멍🔔</title>
-  <style>
-    body { font-family:sans-serif; background:#f4f4f4; padding:20px }
-    .card { background:#fff; border-radius:12px; padding:20px; max-width:400px; margin:0 auto; box-shadow:0 4px 12px rgba(0,0,0,0.1) }
-    h1 { text-align:center; color:#7b5cff }
-    label { display:block; margin:12px 0 4px; font-weight:bold }
-    select,input[type=number],input[type=file] { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px }
-    #price { margin:16px 0; font-size:1.2em; font-weight:bold }
-    button { width:100%; padding:12px; background:#7b5cff; color:#fff; border:none; border-radius:8px; font-size:1em; margin-top:16px }
-    .alarms { margin-top:20px }
-    .alarm-item { background:#f9f9f9; padding:10px; margin-top:8px; border-radius:8px; display:flex; justify-content:space-between; }
-    .alarm-item button { background:#ff5c5c; border:none; color:#fff; padding:6px 12px; border-radius:6px }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>🔔코인 알람멍🔔</h1>
-
-    <label for="exchange">거래소 선택</label>
-    <select id="exchange">
-      <option value="upbit">업비트</option>
-      <option value="binance">바이낸스</option>
-      <option value="bitget">비트겟</option>
-    </select>
-
-    <label for="coin">코인 선택</label>
-    <select id="coin">
-      <option value="BTC">비트코인 (BTC)</option>
-      <option value="ETH">이더리움 (ETH)</option>
-      <option value="SOL">솔라나 (SOL)</option>
-      <option value="XRP">리플 (XRP)</option>
-      <option value="ADA">에이다 (ADA)</option>
-      <option value="DOGE">도지 (DOGE)</option>
-      <option value="AVAX">아발란체 (AVAX)</option>
-    </select>
-
-    <div id="price">현재가: -</div>
-
-    <label for="threshold">설정가</label>
-    <input type="number" id="threshold" placeholder="예: 30000"/>
-
-    <label for="condition">알림 조건</label>
-    <select id="condition">
-      <option value="above">설정가 이상 도달 시</option>
-      <option value="below">설정가 이하 도달 시</option>
-    </select>
-
-    <label for="interval">반복 간격 (초)</label>
-    <input type="number" id="interval" value="2"/>
-
-    <label for="sound">알림 사운드</label>
-    <select id="sound">
-      <option value="default">🔔 기본 벨소리</option>
-      <option value="beep">🔉 비프 소리</option>
-      <option value="chime">🎵 차임 소리</option>
-      <option value="custom">➕ 커스텀 (.mp3)</option>
-    </select>
-    <input type="file" id="customFile" accept="audio/mp3" style="display:none; margin-top:8px;"/>
-
-    <button id="register">등록</button>
-
-    <div class="alarms" id="alarmsList"></div>
-  </div>
-
-  <script>
-    const exchangeSel = document.getElementById('exchange');
-    const coinSel     = document.getElementById('coin');
-    const priceDiv    = document.getElementById('price');
-    const threshold   = document.getElementById('threshold');
-    const condition   = document.getElementById('condition');
-    const intervalIn  = document.getElementById('interval');
-    const soundSel    = document.getElementById('sound');
-    const customFile  = document.getElementById('customFile');
-    const registerBtn = document.getElementById('register');
-    const alarmsList  = document.getElementById('alarmsList');
-    let alarms = [];
-
-    // 커스텀 파일 토글
-    soundSel.addEventListener('change', ()=>{
-      customFile.style.display = soundSel.value==='custom' ? 'block' : 'none';
-    });
-
-    // 가격 fetch (2초마다 + 선택 바꿀 때 바로)
-    async function fetchPrice(){
-      const ex = exchangeSel.value;
-      const sym = coinSel.value;
-      let url;
-      // 모두 프록시로 CORS 해결
-      if(ex==='upbit'){
-        url = `https://api.codetabs.com/v1/proxy?quest=https://api.upbit.com/v1/ticker?markets=KRW-${sym}`;
-      }
-      if(ex==='binance'){
-        url = `https://api.codetabs.com/v1/proxy?quest=https://api.binance.com/api/v3/ticker/price?symbol=${sym}USDT`;
-      }
-      if(ex==='bitget'){
-        url = `https://api.codetabs.com/v1/proxy?quest=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${sym}USDT`;
-      }
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        let p;
-        if(ex==='upbit')     p = data[0].trade_price;
-        if(ex==='binance')   p = parseFloat(data.price);
-        if(ex==='bitget')    p = parseFloat(data.data.last);
-        const unit = ex==='upbit'?'KRW':'USDT';
-        priceDiv.textContent = `현재가: ${p.toLocaleString(undefined,{minimumFractionDigits: ex==='upbit'?0:2 })} ${unit}`;
-        checkAlarms(p);
-      } catch(err){
-        priceDiv.textContent = '현재가: - (불러오기 실패)';
-      }
-    }
-
-    // 알람 체크
-    function checkAlarms(p){
-      alarms.forEach(a=>{
-        if(a.triggered) return;
-        if((a.condition==='above'&&p>=a.threshold)||(a.condition==='below'&&p<=a.threshold)){
-          a.triggered = true;
-          playSound(a);
-          alert(`${a.coin} ${a.condition==='above'?'이상':'이하'} ${a.threshold} 도달!`);
-        }
-      });
-    }
-
-    // 사운드 재생
-    function playSound(a){
-      if(a.sound==='default') new Audio('bell.mp3').play();
-      else if(a.sound==='beep')  new Audio('beep.mp3').play();
-      else if(a.sound==='chime') new Audio('chime.mp3').play();
-      else if(a.sound==='custom'&&a.file) new Audio(URL.createObjectURL(a.file)).play();
-    }
-
-    // 알람 등록
-    registerBtn.addEventListener('click', ()=>{
-      const alarm = {
-        exchange: exchangeSel.value,
-        coin:      coinSel.value,
-        threshold: parseFloat(threshold.value),
-        condition: condition.value,
-        intervalSec: parseInt(intervalIn.value,10),
-        sound:     soundSel.value,
-        file:      customFile.files[0]||null,
-        triggered: false
-      };
-      alarms.push(alarm);
-      renderAlarms();
-    });
-
-    // 리스트 렌더
-    function renderAlarms(){
-      alarmsList.innerHTML = '';
-      alarms.forEach((a,i)=>{
-        const div = document.createElement('div');
-        div.className = 'alarm-item';
-        div.innerHTML = `
-          <span>${a.coin} ${a.condition==='above'?'▲':'▼'} ${a.threshold}</span>
-          <button data-i="${i}">삭제</button>`;
-        div.querySelector('button').addEventListener('click', e=>{
-          alarms.splice(e.target.dataset.i,1);
-          renderAlarms();
-        });
-        alarmsList.appendChild(div);
-      });
-    }
-
-    // 2초마다 자동 갱신
-    setInterval(fetchPrice, 2000);
-    // 거래소나 코인 변경 시 즉시 갱신
-    exchangeSel.addEventListener('change', fetchPrice);
-    coinSel.addEventListener('change', fetchPrice);
-    window.addEventListener('load', fetchPrice);
-  </script>
-</body>
-</html>
+if(ex==='bitget'){
+-      url = `https://api.codetabs.com/v1/proxy?quest=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${sym}USDT`;
++      url = `https://api.codetabs.com/v1/proxy?quest=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${sym}USDT`;
+     }
+     try {
+       const res = await fetch(url);
+       const data = await res.json();
+       let p;
+       if(ex==='upbit')     p = data[0].trade_price;
+       if(ex==='binance')   p = parseFloat(data.price);
+-      if(ex==='bitget')    p = parseFloat(data.data.last);
++      if(ex==='bitget') {
++        // Bitget API sometimes returns data as object or as array
++        let payload = data.data;
++        if (Array.isArray(payload)) payload = payload[0];
++        p = parseFloat(payload.last);
++      }
+       const unit = ex==='upbit'?'KRW':'USDT';
+       priceDiv.textContent = `현재가: ${p.toLocaleString(undefined,{minimumFractionDigits: ex==='upbit'?0:2 })} ${unit}`;
+       checkAlarms(p);
