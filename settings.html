@@ -1,23 +1,62 @@
-<!-- settings.html -->
-<!-- fragment: 설정가·조건·반복·사운드·커스텀 파일 -->
-<label for="targetPrice">설정가</label>
-<input type="number" id="targetPrice" placeholder="예: 30000" />
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>🔔 알림 설정</title>
+  <style>
+    body { font-family:sans-serif; padding:1rem; }
+    label, select, input, button { display:block; width:100%; margin-top:1rem; padding:.5rem;}
+    button { background:#633cff; color:#fff; border:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <h1>🔔 알림 설정</h1>
 
-<label for="condition">알림 조건</label>
-<select id="condition">
-  <option value="above">설정가 이상 도달 시</option>
-  <option value="below">설정가 이하 도달 시</option>
-</select>
+  <div>▶ 거래소·코인:
+    <strong id="info"></strong>
+  </div>
 
-<label for="interval">반복 간격 (초)</label>
-<input type="number" id="interval" value="2" min="1"/>
+  <label for="target">설정가</label>
+  <input type="number" id="target" placeholder="예: 30000"/>
 
-<label for="sound">알림 사운드</label>
-<select id="sound">
-  <option value="default">🔔 기본 벨소리</option>
-  <option value="beep">🔊 비프 소리</option>
-  <option value="chime">🎵 차임 소리</option>
-</select>
+  <label for="cond">알림 조건</label>
+  <select id="cond">
+    <option value="above">설정가 이상 도달 시</option>
+    <option value="below">설정가 이하 도달 시</option>
+  </select>
 
-<label for="customFile">커스텀 사운드 (.mp3)</label>
-<input type="file" id="customFile" accept="audio/mp3" />
+  <label for="intv">반복 간격 (초)</label>
+  <input type="number" id="intv" value="2" min="1"/>
+
+  <label for="snd">알림 사운드</label>
+  <select id="snd">
+    <option value="default">🔔 기본 벨소리</option>
+    <option value="beep">🔊 비프 소리</option>
+    <option value="chime">🎵 차임 소리</option>
+  </select>
+
+  <div id="custom-sound">
+    <label for="f">커스텀 사운드 (.mp3)</label>
+    <input type="file" id="f" accept="audio/mp3"/>
+  </div>
+
+  <button onclick="register()">등록</button>
+  <a href="live-price.html" style="margin-top:1rem; display:block;">← 실시간 가격 보기</a>
+
+  <script>
+    // 선택된 거래소·코인 표시
+    const infoEl = document.getElementById('info');
+    window.addEventListener('load', () => {
+      const ex   = localStorage.getItem('exchange') || 'upbit';
+      const coin = localStorage.getItem('coin')     || 'BTC';
+      infoEl.innerText = `${ex.toUpperCase()} - ${coin}`;
+    });
+
+    function register(){
+      // 원하시는 로직 추가하세요...
+      alert('알림이 등록되었습니다!');
+    }
+  </script>
+</body>
+</html>
