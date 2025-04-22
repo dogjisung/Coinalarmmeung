@@ -28,7 +28,7 @@
 </select>
 
 <label for="coin">코인</label>
-<input type="text" id="coin" placeholder="예: BTC/USDT" />
+<input type="text" id="coin" placeholder="예: BTC/USDT" onblur="fetchPrice()" />
 
 <div class="price" id="price">현재가 : -</div>
 
@@ -46,6 +46,7 @@
   </div>  <script>
     async function fetchPrice() {
       const coin = document.getElementById('coin').value.replace('/', '').toUpperCase();
+      if (!coin) return;
       const url = `https://coin-proxy.jane785714.workers.dev/?url=https://api.binance.com/api/v3/ticker/price?symbol=${coin}`;
       try {
         const res = await fetch(url);
@@ -63,8 +64,5 @@
       const condition = document.getElementById('condition').value;
       alert(`알림이 등록되었습니다.\n[${exchange}] ${coin} - ${condition === 'above' ? '이상' : '이하'} ${target}`);
     }
-
-    // 실시간 가격 조회 (2초 간격)
-    setInterval(fetchPrice, 2000);
   </script></body>
 </html>
