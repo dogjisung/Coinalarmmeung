@@ -69,23 +69,37 @@
     async function onCoinSelected() {
       const coin = document.getElementById('coin').value;
       const exchange = document.getElementById('exchange').value;
-
       let url = '';
+
       if (exchange === 'binance') {
         const symbol = coin.replace('/', '');
         url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
       } else if (exchange === 'upbit') {
         const symbol = 'KRW-' + coin.split('/')[0];
         url = `https://api.upbit.com/v1/ticker?markets=${symbol}`;
-      } else {
-        document.getElementById('price').textContent = '현재가 : 지원 안됨';
-        return;
+      } else if (exchange === 'bitget') {
+        const symbol = coin.replace('/', '');
+        url = `https://coin-proxy.jane785714.workers.dev/?url=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}`;
+      } else if (exchange === 'bybit') {
+        const symbol = coin.replace('/', '');
+        url = `https://coin-proxy.jane785714.workers.dev/?url=https://api.bybit.com/v2/public/tickers?symbol=${symbol}`;
       }
 
       try {
         const res = await fetch(url);
         const data = await res.json();
-        const price = exchange === 'upbit' ? data[0].trade_price : data.price;
+
+        let price;
+        if (exchange === 'upbit') {
+          price = data[0].trade_price;
+        } else if (exchange === 'bitget') {
+          price = data.data.close;
+        } else if (exchange === 'bybit') {
+          price = data.result[0].last_price;
+        } else {
+          price = data.price;
+        }
+
         document.getElementById('price').textContent = `현재가 : ${parseFloat(price).toLocaleString()} USDT`;
       } catch (e) {
         document.getElementById('price').textContent = '현재가 : 조회 실패';
