@@ -5,16 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🔔코인 알람멍🔔</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    label { display: block; margin-top: 1rem; }
-    select, input[type=number], button { width: 100%; padding: .5rem; margin-top: .25rem; }
+    body { font-family: sans-serif; padding: 1rem; max-width: 400px; margin: auto; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    select, input, button { width: 100%; padding: .5rem; margin-top: .25rem; box-sizing: border-box; }
     #price { font-size: 1.25rem; margin-top: 1rem; }
-    #custom-sound { margin-top: 1rem; }
   </style>
 </head>
 <body>
 
-  <h1>🔔코인 알람멍🔔</h1>
+  <h1 style="text-align:center;">🔔코인 알람멍🔔</h1>
 
   <label for="exchange">거래소 선택</label>
   <select id="exchange">
@@ -59,22 +58,23 @@
   <button onclick="registerAlert()">등록</button>
 
   <script>
-    const exchangeEl = document.getElementById('exchange');
+    const exEl       = document.getElementById('exchange');
     const coinEl     = document.getElementById('coin');
     const priceEl    = document.getElementById('price');
     const intervalEl = document.getElementById('interval');
+    let fetchTimer;
 
-    let fetchTimer = null;
+    // allorigins 프록시
+    const proxy = url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
 
-    // 현재가 가져오는 함수
     async function fetchPrice() {
-      const ex   = exchangeEl.value;
+      const ex   = exEl.value;
       const coin = coinEl.value;
       let url, res, data, price;
 
       try {
         if (ex === 'upbit') {
-          url  = `https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
+          url  = proxy(`https://api.upbit.com/v1/ticker?markets=KRW-${coin}`);
           res  = await fetch(url);
           data = await res.json();
           price = data[0].trade_price;
@@ -89,38 +89,31 @@
 
         } else if (ex === 'bitget') {
           url  = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT`;
-          res  = await fetch(url);
+          res  = await fetch(proxy(url));
           data = await res.json();
-          // bitget 구조: { code: ..., data: { symbol, price, ... } }
-          price = parseFloat(data.data.price);
+          // bitget 리스폰스: { code: ..., data: { symbol, last, ... } }
+          price = parseFloat(data.data.last);
           priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
 
         }
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        console.error(e);
         priceEl.innerText = '현재가: (불러오기 실패)';
       }
     }
 
-    // 1) 거래소나 코인 변경 시 즉시 한 번 가져오기
-    exchangeEl.addEventListener('change', resetTimer);
-    coinEl.addEventListener('change', resetTimer);
-
-    // 2) 반복 간격이 바뀌면 재설정
-    intervalEl.addEventListener('change', resetTimer);
-
-    // 타이머 재시작
     function resetTimer() {
-      if (fetchTimer) clearInterval(fetchTimer);
+      clearInterval(fetchTimer);
       fetchPrice();
-      const sec = Math.max(1, parseInt(intervalEl.value, 10));
-      fetchTimer = setInterval(fetchPrice, sec * 1000);
+      const sec = Math.max(1, parseInt(intervalEl.value,10));
+      fetchTimer = setInterval(fetchPrice, sec*1000);
     }
 
-    // 페이지 로드 직후 타이머 스타트
+    exEl.addEventListener('change', resetTimer);
+    coinEl.addEventListener('change', resetTimer);
+    intervalEl.addEventListener('change', resetTimer);
     window.addEventListener('load', resetTimer);
 
-    // alert 등록(예시)
     function registerAlert() {
       alert('알림이 등록되었습니다!');
     }
