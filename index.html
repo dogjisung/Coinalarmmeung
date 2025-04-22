@@ -1,30 +1,53 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>🔔코인 알람멍🔔</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    label { display:block; margin-top:1rem; }
+    select, input, button, div { width: 100%; margin-top:.25rem; padding:.5rem; }
+    #price { font-size:1.25rem; margin-top:1rem; }
+    button { margin-top: 1rem; }
+  </style>
 </head>
 <body>
+  <h1>🔔코인 알람멍🔔</h1>
+
+  <!-- fragments will be injected here -->
   <div id="part-exchange"></div>
   <div id="part-live-price"></div>
   <div id="part-settings"></div>
+  <button onclick="registerAlert()">등록</button>
 
   <script>
-    async function loadFragment(targetId, url) {
-      const res = await fetch(url);
-      if (!res.ok) {
-        document.getElementById(targetId).innerText = url + ' 로딩 실패';
-        return;
-      }
-      document.getElementById(targetId).innerHTML = await res.text();
+    // helper to fetch and inject fragment.html into container
+    async function loadFragment(containerId, fragmentUrl) {
+      const html = await fetch(fragmentUrl).then(r => r.text());
+      document.getElementById(containerId).innerHTML = html;
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      loadFragment('part-exchange',  'exchange.html');
-      loadFragment('part-live-price','live-price.html');
-      loadFragment('part-settings',  'settings.html');
-    });
+    // 1) load all 3 fragments on startup
+    Promise.all([
+      loadFragment('part-exchange',  'exchange.html'),
+      loadFragment('part-live-price','live-price.html'),
+      loadFragment('part-settings',  'settings.html'),
+    ]).then(initLogic);
+
+    function initLogic() {
+      // 이제 DOM에 exchange, price, settings UI가 모두 들어왔으니
+      // 기존에 쓰시던 fetchPrice, resetTimer 같은 로직을 여기에 붙여주세요.
+      // 예: document.getElementById('exchange').addEventListener(...)
+      //
+      // 특히 bitget 쪽 오류는 아래처럼 URL/응답 구조를
+      // 실제 콘솔에 찍어서(data.data) 제대로 선택했는지 확인해보시면 됩니다.
+      console.log('Fragments loaded, 이제 로직 초기화');
+    }
+
+    function registerAlert() {
+      alert('알림이 등록되었습니다!');
+    }
   </script>
 </body>
 </html>
