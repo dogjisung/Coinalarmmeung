@@ -1,93 +1,32 @@
-<!DOCTYPE html><html lang="ko"><head>
+<!DOCTYPE html><html lang="ko">
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>코인 알람멍</title>
+  <title>🔔코인 알람멍🔔</title>
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f1f5f9;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-    }.container {
-  max-width: 400px;
-  width: 100%;
-  background: #fff;
-  margin: 30px 0;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-  text-align: center;
-  font-size: 24px;
-  color: #7c3aed;
-}
-
-h1 span {
-  font-size: 28px;
-}
-
-label {
-  display: block;
-  margin-top: 15px;
-  font-weight: bold;
-}
-
-select,
-input[type="text"],
-input[type="number"] {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
-
-#price {
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  margin-top: 15px;
-}
-
-button {
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  background-color: #7c3aed;
-  color: white;
-  cursor: pointer;
-}
-
-#custom-sound {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
+    body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
+    .card { background: #fff; border-radius: 1rem; padding: 1.5rem; max-width: 400px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #6e4fff; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    select, input[type=number], input[type=file], button { width: 100%; margin-top: 0.5rem; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem; }
+    #price { margin-top: 1rem; font-size: 1.25rem; font-weight: bold; }
+    button { background: #6e4fff; color: #fff; border: none; cursor: pointer; }
   </style>
-</head><body>
-  <div class="container">
-    <h1><span>🔔</span>코인 알람멍<span>🔔</span></h1><label for="exchange">거래소 선택</label>
+</head>
+<body>
+  <div class="card">
+    <h1>🔔코인 알람멍🔔</h1><label for="exchange">거래소 선택</label>
 <select id="exchange">
-  <option>업비트</option>
-  <option>바이낸스</option>
-  <option>비트겟</option>
+  <option value="upbit">업비트</option>
+  <option value="binance">바이낸스</option>
+  <option value="bitget">비트겟</option>
 </select>
 
 <label for="coin">코인 선택</label>
 <select id="coin">
-  <option>비트코인 (BTC)</option>
-  <option>이더리움 (ETH)</option>
-  <option>리플 (XRP)</option>
+  <option value="BTC">비트코인 (BTC)</option>
+  <option value="ETH">이더리움 (ETH)</option>
+  <option value="XRP">리플 (XRP)</option>
 </select>
 
 <div id="price">현재가: -</div>
@@ -97,67 +36,84 @@ button {
 
 <label for="condition">알림 조건</label>
 <select id="condition">
-  <option>설정가 이상 도달 시</option>
-  <option>설정가 이하 도달 시</option>
+  <option value="above">설정가 이상 도달 시</option>
+  <option value="below">설정가 이하 도달 시</option>
 </select>
 
 <label for="interval">반복 간격 (초)</label>
-<input type="number" id="interval" value="2" />
+<input type="number" id="interval" value="2" min="1" />
 
 <label for="sound">알림 사운드</label>
 <select id="sound">
-  <option>🔔 기본 벨소리</option>
-  <option>🔊 비프 소리</option>
-  <option>🎵 차임 소리</option>
+  <option value="default">🔔 기본 벨소리</option>
+  <option value="beep">🔊 비프 소리</option>
+  <option value="chime">🎵 차임 소리</option>
 </select>
 
 <div id="custom-sound">
   <label for="customFile">커스텀 사운드 (.mp3)</label>
-  <input type="file" id="customFile" accept="audio/mp3">
+  <input type="file" id="customFile" accept="audio/mp3" />
 </div>
 
 <button onclick="registerAlert()">등록</button>
 
   </div>  <script>
-    const exchangeSelect = document.getElementById("exchange");
-    const coinSelect = document.getElementById("coin");
-    const priceDiv = document.getElementById("price");
+    let fetchTimer;
+    const priceEl = document.getElementById('price');
+
+    function getSymbolPair(exchange, coin) {
+      if (exchange === 'upbit') return `KRW-${coin}`;
+      if (exchange === 'binance') return `${coin}USDT`;
+      if (exchange === 'bitget') return `${coin}USDT`;
+    }
 
     async function fetchPrice() {
-      const exchange = exchangeSelect.value;
-      const coin = coinSelect.value.split(" (")[1].replace(")", "");
-
-      let apiUrl = "";
-      let parser = (data) => null;
-
-      if (exchange === "업비트") {
-        apiUrl = `https://api.codetabs.com/v1/proxy/?quest=https://api.upbit.com/v1/ticker?markets=KRW-${coin}`;
-        parser = (data) => data[0]?.trade_price.toLocaleString() + " KRW";
-      } else if (exchange === "바이낸스") {
-        apiUrl = `https://api.codetabs.com/v1/proxy/?quest=https://api.binance.com/api/v3/ticker/price?symbol=${coin}USDT`;
-        parser = (data) => parseFloat(data.price).toLocaleString(undefined, { minimumFractionDigits: 2 }) + " USDT";
-      } else if (exchange === "비트겟") {
-        apiUrl = `https://api.codetabs.com/v1/proxy/?quest=https://api.bitget.com/api/spot/v1/market/ticker?symbol=${coin}USDT_SPBL`;
-        parser = (data) => parseFloat(data.data?.last || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) + " USDT";
-      }
-
+      const exch = document.getElementById('exchange').value;
+      const coin = document.getElementById('coin').value;
       try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        const priceText = parser(data);
-        priceDiv.textContent = priceText && !priceText.includes("NaN") ? `현재가: ${priceText}` : "현재가: - (불러오기 실패)";
-      } catch (e) {
-        priceDiv.textContent = "현재가: - (불러오기 실패)";
+        let url, res, data, price;
+        if (exch === 'upbit') {
+          url = `https://api.upbit.com/v1/ticker?markets=${getSymbolPair(exch, coin)}`;
+          res = await fetch(url);
+          data = await res.json();
+          price = data[0].trade_price;
+          priceEl.innerText = `현재가: ${price.toLocaleString()} KRW`;
+        } else if (exch === 'binance') {
+          url = `https://api.binance.com/api/v3/ticker/price?symbol=${getSymbolPair(exch, coin)}`;
+          res = await fetch(url);
+          data = await res.json();
+          price = parseFloat(data.price);
+          priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
+        } else if (exch === 'bitget') {
+          url = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${getSymbolPair(exch, coin)}`;
+          res = await fetch(url);
+          data = await res.json();
+          // bitget response: { code: '00000', data: { symbol: 'BTCUSDT', price: '88000.00', ... }}
+          price = parseFloat(data.data.price);
+          priceEl.innerText = `현재가: ${price.toLocaleString()} USDT`;
+        }
+      } catch (err) {
+        console.error(err);
+        priceEl.innerText = `현재가: - (불러오기 실패)`;
       }
     }
+
+    function startFetching() {
+      clearInterval(fetchTimer);
+      fetchPrice();
+      const sec = parseInt(document.getElementById('interval').value) || 5;
+      fetchTimer = setInterval(fetchPrice, sec * 1000);
+    }
+
+    document.getElementById('exchange').addEventListener('change', startFetching);
+    document.getElementById('coin').addEventListener('change', startFetching);
+    document.getElementById('interval').addEventListener('change', startFetching);
+
+    // 시작
+    startFetching();
 
     function registerAlert() {
-      alert("등록 기능은 구현 중입니다.");
+      alert('알림이 등록되었습니다!');
     }
-
-    exchangeSelect.addEventListener("change", fetchPrice);
-    coinSelect.addEventListener("change", fetchPrice);
-
-    setInterval(fetchPrice, 2000);
-    fetchPrice();
-  </script></body></html>
+  </script></body>
+</html>
