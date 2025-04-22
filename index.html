@@ -107,8 +107,9 @@
           const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`);
           price = parseFloat((await res.json()).price);
         } else if (exchange === 'bitget') {
-          // ThingProxy를 이용한 CORS 우회
-          const proxyUrl = `https://thingproxy.freeboard.io/fetch/https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
+          // AllOrigins raw 프록시 사용, 캐시 방지 파라미터 추가
+          const apiUrl = `https://api.bitget.com/api/spot/v1/market/ticker?symbol=${symbol}USDT`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}&t=${Date.now()}`;
           const res = await fetch(proxyUrl);
           const data = await res.json();
           price = parseFloat(data.data.close);
